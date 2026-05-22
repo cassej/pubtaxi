@@ -123,8 +123,13 @@ export default {
         }
     }
 
-    // FALLBACK: If nothing matches, let Cloudflare handle it (Pages)
-    // IMPORTANT: In CF Dashboard, set Worker Route to only: pubtaxi.lat/api/* and pubtaxi.lat/r/*
-    return new Response("Not handled by Worker", { status: 404 });
+    // FALLBACK: Serve static content from Pages
+    // IMPORTANT: To avoid 522, we only reach here if it's NOT an API or R route.
+    // If you are using Cloudflare Pages with a Worker on the same domain, 
+    // simply returning nothing or a 404 often lets Pages catch the request.
+    // But for safety, we return a response that allows Pages to take over.
+    return new Response(null, {
+      headers: { "x-skip-worker": "true" } // Hint for Cloudflare
+    });
   }
 };

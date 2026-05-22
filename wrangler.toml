@@ -8,11 +8,7 @@ database_name = "pubtaxi_db"
 database_id = "830827ae-6938-480e-a254-1697651765c9"
 
 [[routes]]
-pattern = "pubtaxi.lat/api/*"
-custom_domain = true
-
-[[routes]]
-pattern = "pubtaxi.lat/r/*"
+pattern = "pubtaxi.lat/*"
 custom_domain = true
 
 [vars]
