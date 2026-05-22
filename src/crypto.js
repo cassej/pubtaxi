@@ -6,6 +6,21 @@ export async function hashPassword(password) {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+export async function timingSafeEqual(a, b) {
+  const encoder = new TextEncoder();
+  const bufA = encoder.encode(String(a));
+  const bufB = encoder.encode(String(b));
+
+  if (bufA.length !== bufB.length) return false;
+
+  const bufC = new Uint8Array(bufA.length);
+  for (let i = 0; i < bufA.length; i++) {
+    bufC[i] = bufA[i] ^ bufB[i];
+  }
+
+  return bufC.reduce((acc, val) => acc | val, 0) === 0;
+}
+
 export async function signJWT(payload, secret) {
   const encoder = new TextEncoder();
   const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
