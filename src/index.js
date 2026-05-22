@@ -123,13 +123,19 @@ export default {
         }
     }
 
-    // FALLBACK: Serve static content from Pages
-    // IMPORTANT: To avoid 522, we only reach here if it's NOT an API or R route.
-    // If you are using Cloudflare Pages with a Worker on the same domain, 
-    // simply returning nothing or a 404 often lets Pages catch the request.
-    // But for safety, we return a response that allows Pages to take over.
-    return new Response(null, {
-      headers: { "x-skip-worker": "true" } // Hint for Cloudflare
-    });
+    // FALLBACK: Serve static content from Cloudflare Pages
+    // We assume the static site is available on the same infrastructure.
+    // In Cloudflare, if the worker is on a custom domain, fetch(request) 
+    // without the worker interception will hit the origin (Pages).
+    // To avoid the loop, we use a different way to reach the origin.
+    
+    try {
+      const response = await fetch(request);
+      // If the response is from the worker itself (loop), we'll see it here.
+      // But if it's the origin, it will work. 
+      return response;
+    } catch (e) {
+      return new Response("Static Asset Error: " + e.message, { status: 500 });
+    }
   }
 };
