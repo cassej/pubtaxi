@@ -91,6 +91,14 @@ export default {
         }
       }
 
+      ctx.waitUntil((async () => {
+        try {
+          await env.DB.prepare(`INSERT INTO events (qr_id, client_id, event_type) VALUES (?, ?, 'redirect')`).bind(qrId, clientId).run();
+        } catch (err) {
+          console.log(JSON.stringify({ event: "qr_redirect_log_failed", error: String(err) }));
+        }
+      })());
+
       return new Response(null, {
         status: 302,
         headers: {

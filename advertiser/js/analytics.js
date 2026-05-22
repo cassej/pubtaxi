@@ -58,6 +58,10 @@ async function initCharts() {
                         <p class="font-semibold text-sm">${c.name || 'Sin nombre'}</p>
                         <p class="text-xs text-gray-500">${c.status === 'active' ? 'Activa' : 'Pausada'}</p>
                     </div>
+                    <div class="flex gap-4 text-sm">
+                        <span class="text-gray-600">📱 ${c.scan_count || 0} escaneos</span>
+                        <span class="text-blue-600">🔗 ${c.redirect_count || 0} redirecciones</span>
+                    </div>
                 </div>
             `).join('');
         }

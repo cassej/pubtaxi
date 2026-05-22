@@ -70,6 +70,7 @@
                         <th class="p-4">Anunciante</th>
                         <th class="p-4">Vehículos</th>
                         <th class="p-4 text-center">Escaneos (30d)</th>
+                        <th class="p-4 text-center">Redirecciones (30d)</th>
                         <th class="p-4">Estado</th>
                         <th class="p-4">Creada</th>
                         <th class="p-4 text-right">Acciones</th>
@@ -194,7 +195,7 @@ function populateSelects() {
 function renderCampaigns() {
     const tbody = document.getElementById('campaigns-tbody');
     if (allCampaigns.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">No hay campañas</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-400">No hay campañas</td></tr>';
         return;
     }
     tbody.innerHTML = allCampaigns.map(c => `
@@ -203,6 +204,7 @@ function renderCampaigns() {
             <td class="p-4">${c.advertiser_name || '-'}</td>
             <td class="p-4">${c.vehicle_count || 0}</td>
             <td class="p-4 text-center font-bold">${c.scans_month || 0}</td>
+            <td class="p-4 text-center font-bold text-blue-600">${c.redirects_month || 0}</td>
             <td class="p-4"><span class="${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-2 py-1 rounded-full text-xs font-bold">${(c.status || 'active').toUpperCase()}</span></td>
             <td class="p-4 text-gray-500 whitespace-nowrap">${c.created_at ? new Date(c.created_at).toLocaleDateString('es-PA') : '-'}</td>
             <td class="p-4 text-right whitespace-nowrap">
