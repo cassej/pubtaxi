@@ -221,24 +221,47 @@ const METHODS = {
 
   'admin.campaigns.create': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
-    const { advertiser_id, name, target_url, status } = params;
+    const { advertiser_id, name, status } = params;
     if (!advertiser_id || !name) throw new Error("Missing required params: advertiser_id, name");
 
     const result = await env.DB.prepare(
-      "INSERT INTO campaigns (advertiser_id, name, target_url, status) VALUES (?, ?, ?, ?)"
-    ).bind(advertiser_id, name, target_url || '', status || 'active').run();
+      "INSERT INTO campaigns (advertiser_id, name, status) VALUES (?, ?, ?)"
+    ).bind(advertiser_id, name, status || 'active').run();
     return { success: true, id: result.meta.last_row_id };
   },
 
   'admin.campaigns.update': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
-    const { id, advertiser_id, name, target_url, status } = params;
+    const { id, name, status } = params;
     if (!id) throw new Error("Missing required params: id");
 
-    await env.DB.prepare(
-      "UPDATE campaigns SET advertiser_id = ?, name = ?, target_url = ?, status = ? WHERE id = ?"
-    ).bind(advertiser_id, name, target_url || '', status || 'active', id).run();
+    if (name || status) {
+      const updates = [];
+      const values = [];
+      if (name) { updates.push("name = ?"); values.push(name); }
+      if (status) { updates.push("status = ?"); values.push(status); }
+      values.push(id);
+      await env.DB.prepare(`UPDATE campaigns SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
+    }
     return { success: true };
+  },
+
+  'admin.campaigns.qrCodes': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { campaign_id } = params;
+    if (!campaign_id) throw new Error("Missing required params: campaign_id");
+
+    const codes = await env.DB.prepare(`
+      SELECT qc.id, qc.vehicle_id, qc.position, qc.redirect_mode, qc.created_at,
+             v.plate_number, v.model,
+             u.name as publisher_name
+      FROM qr_codes qc
+      JOIN vehicles v ON qc.vehicle_id = v.id
+      LEFT JOIN users u ON v.publisher_id = u.id
+      WHERE qc.campaign_id = ?
+      ORDER BY qc.created_at DESC
+    `).bind(campaign_id).all();
+    return { codes: codes.results };
   },
 
   'admin.users.toggleStatus': async (params, env, context) => {

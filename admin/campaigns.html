@@ -90,7 +90,6 @@
                 <option value="">Seleccionar anunciante</option>
             </select>
             <input type="text" id="new-name" placeholder="Nombre de la campaña" required class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
-            <input type="url" id="new-url" placeholder="URL de destino" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
             <select id="new-status" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
                 <option value="active">Activa</option>
                 <option value="inactive">Inactiva</option>
@@ -108,11 +107,7 @@
         <h3 class="font-bold text-lg mb-4">Editar Campaña</h3>
         <form id="edit-form" class="space-y-4">
             <input type="hidden" id="edit-id">
-            <select id="edit-advertiser" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
-                <option value="">Seleccionar anunciante</option>
-            </select>
             <input type="text" id="edit-name" placeholder="Nombre" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
-            <input type="url" id="edit-url" placeholder="URL de destino" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
             <select id="edit-status" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
                 <option value="active">Activa</option>
                 <option value="inactive">Inactiva</option>
@@ -125,6 +120,41 @@
     </div>
 </div>
 
+<div id="qr-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-lg" id="qr-modal-title">Códigos QR</h3>
+            <button onclick="closeQrModal()" class="p-2 rounded-lg hover:bg-gray-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto min-h-0">
+            <div id="qr-list" class="space-y-2 mb-4"></div>
+
+            <div class="border-t pt-4">
+                <h4 class="font-bold text-sm text-gray-700 mb-3">Asignar nuevo QR</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                    <select id="qr-vehicle" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                        <option value="">Seleccionar vehículo</option>
+                    </select>
+                    <select id="qr-position" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                        <option value="">Posición</option>
+                        <option value="Apoyacabezas Izquierdo">Apoyacabezas Izquierdo</option>
+                        <option value="Apoyacabezas Derecho">Apoyacabezas Derecho</option>
+                        <option value="Salpicadero">Salpicadero</option>
+                        <option value="Asiento Trasero">Asiento Trasero</option>
+                    </select>
+                    <button onclick="assignQr()" class="bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Generar QR</button>
+                </div>
+                <p id="qr-result" class="text-xs text-gray-500 hidden"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="../js/api.js"></script>
 <script src="../js/ui.js"></script>
 <script src="../js/sidebar.js"></script>
@@ -132,6 +162,7 @@
 <script>
 let allCampaigns = [];
 let advertisers = [];
+let qrCampaignId = null;
 
 async function load() {
     await Promise.all([loadCampaigns(), loadAdvertisers()]);
@@ -156,7 +187,6 @@ async function loadAdvertisers() {
 function populateSelects() {
     const html = advertisers.map(a => `<option value="${a.id}">${a.name || a.email} (${a.email})</option>`).join('');
     document.getElementById('new-advertiser').innerHTML = '<option value="">Seleccionar anunciante</option>' + html;
-    document.getElementById('edit-advertiser').innerHTML = '<option value="">Seleccionar anunciante</option>' + html;
 }
 
 function renderCampaigns() {
@@ -173,8 +203,9 @@ function renderCampaigns() {
             <td class="p-4 text-center font-bold">${c.scans_month || 0}</td>
             <td class="p-4"><span class="${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-2 py-1 rounded-full text-xs font-bold">${(c.status || 'active').toUpperCase()}</span></td>
             <td class="p-4 text-gray-500 whitespace-nowrap">${c.created_at ? new Date(c.created_at).toLocaleDateString('es-PA') : '-'}</td>
-            <td class="p-4 text-right">
-                <button onclick="editCampaign(${c.id})" class="text-[#003366] hover:underline text-xs font-medium">Editar</button>
+            <td class="p-4 text-right whitespace-nowrap">
+                <button onclick="editCampaign(${c.id})" class="text-[#003366] hover:underline text-xs font-medium mr-2">Editar</button>
+                <button onclick="showQrModal(${c.id})" class="text-[#FFB800] hover:underline text-xs font-medium">QR</button>
             </td>
         </tr>
     `).join('');
@@ -183,6 +214,10 @@ function renderCampaigns() {
 function showCreateModal() { document.getElementById('create-modal').classList.remove('hidden'); }
 function closeCreateModal() { document.getElementById('create-modal').classList.add('hidden'); }
 function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+function closeQrModal() {
+    document.getElementById('qr-modal').classList.add('hidden');
+    qrCampaignId = null;
+}
 
 document.getElementById('create-form').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -192,7 +227,6 @@ document.getElementById('create-form').addEventListener('submit', async function
         await api('admin.campaigns.create', {
             advertiser_id: parseInt(document.getElementById('new-advertiser').value),
             name: document.getElementById('new-name').value,
-            target_url: document.getElementById('new-url').value,
             status: document.getElementById('new-status').value
         });
         closeCreateModal(); this.reset(); loadCampaigns();
@@ -206,9 +240,7 @@ async function editCampaign(id) {
     if (!c) return;
     document.getElementById('edit-id').value = c.id;
     document.getElementById('edit-name').value = c.name;
-    document.getElementById('edit-url').value = c.target_url || '';
     document.getElementById('edit-status').value = c.status || 'active';
-    document.getElementById('edit-advertiser').value = c.advertiser_id || '';
     document.getElementById('edit-modal').classList.remove('hidden');
 }
 
@@ -219,9 +251,7 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
     try {
         await api('admin.campaigns.update', {
             id: parseInt(document.getElementById('edit-id').value),
-            advertiser_id: parseInt(document.getElementById('edit-advertiser').value) || null,
             name: document.getElementById('edit-name').value,
-            target_url: document.getElementById('edit-url').value,
             status: document.getElementById('edit-status').value
         });
         closeEditModal(); loadCampaigns();
@@ -229,6 +259,82 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
     } catch (err) { toast(err.message, 'error'); }
     finally { btn.disabled = false; btn.textContent = 'Guardar'; }
 });
+
+async function showQrModal(campaignId) {
+    qrCampaignId = campaignId;
+    const c = allCampaigns.find(x => x.id === campaignId);
+    document.getElementById('qr-modal-title').textContent = `QR — ${c ? c.name : ''}`;
+    document.getElementById('qr-result').classList.add('hidden');
+
+    await Promise.all([loadQrCodes(campaignId), loadQrVehicles()]);
+    document.getElementById('qr-modal').classList.remove('hidden');
+}
+
+async function loadQrCodes(campaignId) {
+    try {
+        const data = await api('admin.campaigns.qrCodes', { campaign_id: campaignId });
+        const container = document.getElementById('qr-list');
+        const codes = data.codes || [];
+        if (codes.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">No hay códigos QR asignados todavía</p>';
+            return;
+        }
+        container.innerHTML = codes.map(q => `
+            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl text-sm">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="font-bold text-[#003366]">${q.plate_number || '#' + q.vehicle_id}</span>
+                    <span class="text-gray-500">${q.model || ''}</span>
+                    <span class="text-gray-400 text-xs">${q.position || '—'}</span>
+                    <span class="text-[10px] font-mono bg-gray-200 px-2 py-0.5 rounded">${toBase62(q.id)}</span>
+                </div>
+                <span class="text-xs text-gray-400">${new Date(q.created_at).toLocaleDateString('es-PA')}</span>
+            </div>
+        `).join('');
+    } catch (err) { toast(err.message, 'error'); }
+}
+
+function toBase62(n) {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    if (n === 0) return '0';
+    let result = '';
+    while (n > 0) {
+        result = chars[n % 62] + result;
+        n = Math.floor(n / 62);
+    }
+    return result;
+}
+
+async function loadQrVehicles() {
+    try {
+        const data = await api('vehicle.list');
+        const select = document.getElementById('qr-vehicle');
+        select.innerHTML = '<option value="">Seleccionar vehículo</option>' +
+            (data.vehicles || []).map(v =>
+                `<option value="${v.id}">${v.plate_number || '#' + v.id} — ${v.model || ''} (${v.publisher_name || ''})</option>`
+            ).join('');
+    } catch (err) { /* ignore */ }
+}
+
+async function assignQr() {
+    const vehicleId = parseInt(document.getElementById('qr-vehicle').value);
+    const position = document.getElementById('qr-position').value;
+    if (!vehicleId || !position) { toast('Selecciona vehículo y posición', 'error'); return; }
+    if (!qrCampaignId) return;
+
+    try {
+        const data = await api('qr.generate', {
+            vehicle_id: vehicleId,
+            campaign_id: qrCampaignId,
+            position
+        });
+        const result = document.getElementById('qr-result');
+        result.classList.remove('hidden');
+        result.innerHTML = `QR generado: <span class="font-mono font-bold">${data.shortId}</span> → <span class="text-[10px]">pubtaxi.lat/r/${data.shortId}</span>`;
+        await loadQrCodes(qrCampaignId);
+        loadCampaigns();
+        toast('QR asignado', 'success');
+    } catch (err) { toast(err.message, 'error'); }
+}
 
 load();
 </script>
