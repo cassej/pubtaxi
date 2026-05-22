@@ -185,7 +185,7 @@ const METHODS = {
   'admin.campaigns.list': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
     const campaigns = await env.DB.prepare(`
-      SELECT c.id, c.name, c.target_url, c.status, c.advertiser_id,
+      SELECT c.id, c.name, c.target_url, c.status, c.advertiser_id, c.created_at,
              u.name as advertiser_name, u.email as advertiser_email,
              (SELECT COUNT(*) FROM qr_codes qc WHERE qc.campaign_id = c.id) as vehicle_count,
              (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'scan' AND e.created_at > date('now', '-30 days')) as scans_month,
@@ -221,12 +221,12 @@ const METHODS = {
 
   'admin.campaigns.create': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
-    const { advertiser_id, name, target_url } = params;
+    const { advertiser_id, name, target_url, status } = params;
     if (!advertiser_id || !name) throw new Error("Missing required params: advertiser_id, name");
 
     const result = await env.DB.prepare(
-      "INSERT INTO campaigns (advertiser_id, name, target_url) VALUES (?, ?, ?)"
-    ).bind(advertiser_id, name, target_url || '').run();
+      "INSERT INTO campaigns (advertiser_id, name, target_url, status) VALUES (?, ?, ?, ?)"
+    ).bind(advertiser_id, name, target_url || '', status || 'active').run();
     return { success: true, id: result.meta.last_row_id };
   },
 

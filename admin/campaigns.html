@@ -63,13 +63,13 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
-            <table class="w-full text-left min-w-[600px]">
+            <table class="w-full text-left min-w-[700px]">
                 <thead>
                     <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase font-bold border-b">
                         <th class="p-4">Nombre</th>
                         <th class="p-4">Anunciante</th>
-                        <th class="p-4">URL</th>
-                        <th class="p-4">Clics</th>
+                        <th class="p-4">Vehículos</th>
+                        <th class="p-4 text-center">Escaneos (30d)</th>
                         <th class="p-4">Estado</th>
                         <th class="p-4">Creada</th>
                         <th class="p-4 text-right">Acciones</th>
@@ -91,6 +91,10 @@
             </select>
             <input type="text" id="new-name" placeholder="Nombre de la campaña" required class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
             <input type="url" id="new-url" placeholder="URL de destino" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+            <select id="new-status" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                <option value="active">Activa</option>
+                <option value="inactive">Inactiva</option>
+            </select>
             <div class="flex gap-3">
                 <button type="button" onclick="closeCreateModal()" class="flex-1 py-3 border rounded-xl text-sm font-medium">Cancelar</button>
                 <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950">Crear</button>
@@ -165,10 +169,10 @@ function renderCampaigns() {
         <tr class="hover:bg-gray-50">
             <td class="p-4 font-medium">${c.name}</td>
             <td class="p-4">${c.advertiser_name || '-'}</td>
-            <td class="p-4 text-gray-500 max-w-[200px] truncate"><a href="${c.target_url}" target="_blank" class="hover:underline">${c.target_url || '-'}</a></td>
-            <td class="p-4 text-center font-bold">${c.click_count || 0}</td>
+            <td class="p-4">${c.vehicle_count || 0}</td>
+            <td class="p-4 text-center font-bold">${c.scans_month || 0}</td>
             <td class="p-4"><span class="${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-2 py-1 rounded-full text-xs font-bold">${(c.status || 'active').toUpperCase()}</span></td>
-            <td class="p-4 text-gray-500 whitespace-nowrap">${new Date(c.created_at).toLocaleDateString('es-PA')}</td>
+            <td class="p-4 text-gray-500 whitespace-nowrap">${c.created_at ? new Date(c.created_at).toLocaleDateString('es-PA') : '-'}</td>
             <td class="p-4 text-right">
                 <button onclick="editCampaign(${c.id})" class="text-[#003366] hover:underline text-xs font-medium">Editar</button>
             </td>
@@ -188,7 +192,8 @@ document.getElementById('create-form').addEventListener('submit', async function
         await api('admin.campaigns.create', {
             advertiser_id: parseInt(document.getElementById('new-advertiser').value),
             name: document.getElementById('new-name').value,
-            target_url: document.getElementById('new-url').value
+            target_url: document.getElementById('new-url').value,
+            status: document.getElementById('new-status').value
         });
         closeCreateModal(); this.reset(); loadCampaigns();
         toast('Campaña creada', 'success');
