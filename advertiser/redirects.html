@@ -58,8 +58,8 @@
             <div class="flex items-center gap-3 px-4 py-2">
                 <div class="w-8 h-8 bg-[#003366] rounded-full flex items-center justify-center text-white text-sm font-bold">T</div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">Taller Central</p>
-                    <p class="text-xs text-gray-500">Plan Pro</p>
+                    <p class="text-sm font-semibold text-gray-800 sidebar-user-name">Usuario</p>
+                    <p class="text-xs text-gray-500">Anunciante</p>
                 </div>
             </div>
         </div>
@@ -127,105 +127,72 @@
             </div>
         </div>
 
-        <div id="individual-config" class="space-y-6">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="text-2xl">🚕</span>
-                    <div>
-                        <p class="font-semibold text-gray-800">TAXI-01</p>
-                        <p class="text-xs text-gray-500">Toyota Corolla</p>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <select class="action-select w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]">
-                        <option value="minisite">📱 Mostrar mi Mini-Sitio</option>
-                        <option value="direct">🔗 Redirección directa</option>
-                    </select>
-
-                    <input type="text" class="url-input hidden w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="https://..." value="https://wa.me/50760000000">
-                    <p class="text-[10px] text-gray-400 mt-1 url-label hidden">URL de destino</p>
-
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase mb-3">UTM Etiquetas</p>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div>
-                                <input type="text" class="utm-input w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" value="pubtaxi">
-                                <p class="text-[10px] text-gray-400 mt-1">utm_source</p>
-                            </div>
-                            <div>
-                                <input type="text" class="utm-input w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" value="taxi-01">
-                                <p class="text-[10px] text-gray-400 mt-1">utm_medium</p>
-                            </div>
-                            <div>
-                                <input type="text" class="utm-input w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" value="promo-mayo">
-                                <p class="text-[10px] text-gray-400 mt-1">utm_campaign</p>
-                            </div>
-                            <div>
-                                <input type="text" class="utm-input w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" value="">
-                                <p class="text-[10px] text-gray-400 mt-1">utm_content</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button onclick="alert('Guardado')" class="w-full bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Guardar</button>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="text-2xl">🚕</span>
-                    <div>
-                        <p class="font-semibold text-gray-800">TAXI-02</p>
-                        <p class="text-xs text-gray-500">Kia Picanto</p>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <select class="action-select w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]">
-                        <option value="minisite">📱 Mostrar mi Mini-Sitio</option>
-                        <option value="direct" selected>🔗 Redirección directa</option>
-                    </select>
-
-                    <input type="text" class="url-input w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="https://..." value="https://wa.me/50760000000">
-                    <p class="text-[10px] text-gray-400 mt-1 url-label">URL de destino</p>
-
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase mb-3">UTM Etiquetas</p>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div>
-                                <input type="text" class="utm-input w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" value="pubtaxi">
-                                <p class="text-[10px] text-gray-400 mt-1">utm_source</p>
-                            </div>
-                            <div>
-                                <input type="text" class="utm-input w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" value="taxi-02">
-                                <p class="text-[10px] text-gray-400 mt-1">utm_medium</p>
-                            </div>
-                            <div>
-                                <input type="text" class="utm-input w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" value="promo-mayo">
-                                <p class="text-[10px] text-gray-400 mt-1">utm_campaign</p>
-                            </div>
-                            <div>
-                                <input type="text" class="utm-input w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" value="">
-                                <p class="text-[10px] text-gray-400 mt-1">utm_content</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button onclick="alert('Guardado')" class="w-full bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Guardar</button>
-                </div>
-            </div>
-        </div>
+        <div id="individual-config" class="space-y-6"></div>
 
     </main>
 
 </div>
 
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="js/common.js"></script>
 <script src="js/redirects.js"></script>
 <script src="js/mobile.js"></script>
 <script>
     setActiveNav('redirects.html');
+
+    async function loadVehicles() {
+        try {
+            const data = await api('vehicle.withAds');
+            const container = document.getElementById('individual-config');
+            if (!data.vehicles || data.vehicles.length === 0) {
+                container.innerHTML = '<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center text-gray-400">No tienes vehículos con anuncios activos</div>';
+                return;
+            }
+            container.innerHTML = data.vehicles.map(v => `
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6" data-vehicle-id="${v.id}" data-campaign-id="${v.campaign_id}" data-qr-id="${v.qr_id}">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-2xl">🚕</span>
+                        <div>
+                            <p class="font-semibold text-gray-800">${v.plate_number || '#' + v.id}</p>
+                            <p class="text-xs text-gray-500">${v.model || ''} - ${v.position || ''}</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <select class="action-select w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]">
+                            <option value="minisite" ${v.redirect_mode === 'minisite' ? 'selected' : ''}>📱 Mostrar mi Mini-Sitio</option>
+                            <option value="direct" ${v.redirect_mode === 'direct' ? 'selected' : ''}>🔗 Redirección directa</option>
+                        </select>
+                        <input type="text" class="url-input w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="https://..." value="${v.target_url || ''}">
+                        <button onclick="saveRedirect(this)" class="w-full bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Guardar</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.error('Error loading vehicles:', err);
+        }
+    }
+
+    async function saveRedirect(btn) {
+        const container = btn.closest('[data-campaign-id]');
+        const campaignId = parseInt(container.dataset.campaignId);
+        const targetUrl = container.querySelector('.url-input').value;
+        const redirectMode = container.querySelector('.action-select').value;
+
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+        try {
+            await api('campaign.update', { id: campaignId, target_url: targetUrl, redirect_mode: redirectMode });
+            alert('¡Guardado con éxito!');
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Guardar';
+        }
+    }
+
+    loadVehicles();
 </script>
 </body>
 </html>

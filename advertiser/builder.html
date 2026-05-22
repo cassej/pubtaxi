@@ -58,8 +58,8 @@
             <div class="flex items-center gap-3 px-4 py-2">
                 <div class="w-8 h-8 bg-[#003366] rounded-full flex items-center justify-center text-white text-sm font-bold">T</div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">Taller Central</p>
-                    <p class="text-xs text-gray-500">Plan Pro</p>
+                    <p class="text-sm font-semibold text-gray-800 sidebar-user-name">Usuario</p>
+                    <p class="text-xs text-gray-500">Anunciante</p>
                 </div>
             </div>
         </div>
@@ -238,7 +238,7 @@
                     </div>
                 </div>
 
-                <button onclick="alert('¡Mini-sitio guardado y publicado!')" class="w-full bg-[#FFB800] text-[#003366] py-3 rounded-xl font-bold hover:shadow-lg transition">Publicar Cambios en Vivo</button>
+                <button onclick="saveMinisite()" class="w-full bg-[#FFB800] text-[#003366] py-3 rounded-xl font-bold hover:shadow-lg transition">Publicar Cambios en Vivo</button>
             </div>
 
             <div class="flex flex-col items-center justify-center bg-gray-800 p-6 rounded-3xl shadow-inner relative overflow-hidden">
@@ -280,11 +280,66 @@
 
 </div>
 
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="js/common.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/mobile.js"></script>
 <script>
     setActiveNav('builder.html');
+
+    async function saveMinisite() {
+        const buttons = [];
+        const btnConfigs = [
+            { checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link' },
+            { checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link' },
+            { checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link' },
+            { checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link' },
+            { checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link' },
+            { checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link' }
+        ];
+
+        btnConfigs.forEach(c => {
+            if (document.getElementById(c.checkbox).checked) {
+                buttons.push({ text: document.getElementById(c.text).value, url: document.getElementById(c.link).value });
+            }
+        });
+
+        const config = {
+            bgColor: document.getElementById('input-bg-color').value,
+            btnColor: '#003366',
+            description: document.getElementById('input-desc').value,
+            logoUrl: '',
+            buttons
+        };
+
+        const title = document.getElementById('input-title').value;
+
+        try {
+            await api('advertiser.minisite.save', { title, config });
+            alert('¡Mini-sitio guardado y publicado!');
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    async function loadMinisite() {
+        try {
+            const data = await api('advertiser.minisite.get');
+            if (data.minisite) {
+                const config = data.minisite.config || {};
+                if (config.description) document.getElementById('input-desc').value = config.description;
+                if (data.minisite.title) document.getElementById('input-title').value = data.minisite.title;
+                if (config.bgColor) {
+                    document.getElementById('input-bg-color').value = config.bgColor;
+                    document.getElementById('bg-color-hex').textContent = config.bgColor.toUpperCase();
+                }
+            }
+        } catch (err) {
+            console.error('Error loading minisite:', err);
+        }
+    }
+    loadMinisite();
 </script>
 </body>
 </html>

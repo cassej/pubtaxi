@@ -59,7 +59,7 @@
             <div class="flex items-center gap-3 px-4 py-2">
                 <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">A</div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">Admin</p>
+                    <p class="text-sm font-semibold text-gray-800 sidebar-user-name">Admin</p>
                     <p class="text-xs text-gray-500">Administrador</p>
                 </div>
             </div>
@@ -71,21 +71,6 @@
     <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
         <h1 class="text-xl lg:text-2xl font-bold text-[#003366] mb-6">🚕 Flota de Vehículos</h1>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
-            <div class="flex flex-col sm:flex-row gap-4">
-                <select class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none">
-                    <option>Todos los taxistas</option>
-                    <option>Juan Pérez</option>
-                    <option>Carlos Ruiz</option>
-                </select>
-                <select class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none">
-                    <option>Todos los estados</option>
-                    <option>Activo</option>
-                    <option>Inactivo</option>
-                </select>
-            </div>
-        </div>
-
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <table class="w-full text-left">
                 <thead>
@@ -94,35 +79,12 @@
                         <th class="p-4">Taxista</th>
                         <th class="p-4">Modelo</th>
                         <th class="p-4">Placa</th>
-                        <th class="p-4">Campaña</th>
+                        <th class="p-4">QRs</th>
+                        <th class="p-4">Escaneos Mes</th>
                         <th class="p-4">Estado</th>
-                        <th class="p-4 text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="text-sm divide-y divide-gray-100">
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-4 font-mono font-bold text-[#003366]">TOYOTA-01</td>
-                        <td class="p-4">Juan Pérez</td>
-                        <td class="p-4">Toyota Corolla</td>
-                        <td class="p-4">RI-4829</td>
-                        <td class="p-4">Taller Central</td>
-                        <td class="p-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">ACTIVO</span></td>
-                        <td class="p-4 text-right">
-                            <button class="text-[#003366] hover:underline text-xs font-medium">Ver</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-4 font-mono font-bold text-[#003366]">KIA-02</td>
-                        <td class="p-4">Juan Pérez</td>
-                        <td class="p-4">Kia Picanto</td>
-                        <td class="p-4">AA-9023</td>
-                        <td class="p-4">Taller Central</td>
-                        <td class="p-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">ACTIVO</span></td>
-                        <td class="p-4 text-right">
-                            <button class="text-[#003366] hover:underline text-xs font-medium">Ver</button>
-                        </td>
-                    </tr>
-                </tbody>
+                <tbody id="fleet-tbody" class="text-sm divide-y divide-gray-100"></tbody>
             </table>
         </div>
 
@@ -130,7 +92,34 @@
 
 </div>
 
-<script src="../advertiser/js/common.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
+<script>
+async function loadFleet() {
+    try {
+        const data = await api('admin.vehicles.list');
+        const tbody = document.getElementById('fleet-tbody');
+        if (!data.vehicles || data.vehicles.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">No hay vehículos registrados</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.vehicles.map(v => `
+            <tr class="hover:bg-gray-50">
+                <td class="p-4 font-mono font-bold text-[#003366]">#${v.id}</td>
+                <td class="p-4">${v.publisher_name || v.publisher_email || '—'}</td>
+                <td class="p-4">${v.model || '—'}</td>
+                <td class="p-4">${v.plate_number || '—'}</td>
+                <td class="p-4">${v.qr_count || 0}</td>
+                <td class="p-4 font-bold text-[#003366]">${v.scans_month || 0}</td>
+                <td class="p-4"><span class="${v.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'} px-2 py-1 rounded-full text-xs font-bold">${(v.status || 'active').toUpperCase()}</span></td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Error loading fleet:', err);
+    }
+}
+loadFleet();
+</script>
 </body>
 </html>

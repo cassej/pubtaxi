@@ -12,7 +12,6 @@
 
 <div class="flex min-h-screen">
 
-    <!-- Mobile Header -->
     <header class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm z-50 px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-[#FFB800] rounded-md flex items-center justify-center font-bold text-[#003366]">P</div>
@@ -25,7 +24,6 @@
         </button>
     </header>
 
-    <!-- Sidebar -->
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-sm transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
         <div class="p-6 border-b border-gray-100 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -56,16 +54,15 @@
 
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
             <div class="flex items-center gap-3 px-4 py-2">
-                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">J</div>
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">U</div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">Juan Pérez</p>
+                    <p class="text-sm font-semibold text-gray-800 sidebar-user-name">Usuario</p>
                     <p class="text-xs text-gray-500">Taxista</p>
                 </div>
             </div>
         </div>
     </aside>
 
-    <!-- Overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
     <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
@@ -75,9 +72,9 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500">Balance actual pendiente</p>
-                    <p class="text-3xl font-bold text-[#FFB800]">$342.00</p>
+                    <p class="text-3xl font-bold text-[#FFB800]" id="pending-balance">$0.00</p>
                 </div>
-                <p class="text-xs text-gray-400">Próximo pago: 1 Jun 2026</p>
+                <p class="text-xs text-gray-400">Próximo pago: Fin de mes</p>
             </div>
         </div>
 
@@ -92,45 +89,7 @@
                         <th class="p-4">Estado</th>
                     </tr>
                 </thead>
-                <tbody class="text-sm divide-y divide-gray-100">
-
-                    <tr>
-                        <td class="p-4">
-                            <p class="font-medium">1 May 2026</p>
-                        </td>
-                        <td class="p-4 text-gray-500">Abril 2026</td>
-                        <td class="p-4">145</td>
-                        <td class="p-4 font-bold text-[#003366]">$362.50</td>
-                        <td class="p-4">
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">PAGADO</span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td class="p-4">
-                            <p class="font-medium">1 Apr 2026</p>
-                        </td>
-                        <td class="p-4 text-gray-500">Marzo 2026</td>
-                        <td class="p-4">132</td>
-                        <td class="p-4 font-bold text-[#003366]">$330.00</td>
-                        <td class="p-4">
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">PAGADO</span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td class="p-4">
-                            <p class="font-medium">1 Mar 2026</p>
-                        </td>
-                        <td class="p-4 text-gray-500">Febrero 2026</td>
-                        <td class="p-4">118</td>
-                        <td class="p-4 font-bold text-[#003366]">$295.00</td>
-                        <td class="p-4">
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">PAGADO</span>
-                        </td>
-                    </tr>
-
-                </tbody>
+                <tbody id="payouts-tbody" class="text-sm divide-y divide-gray-100"></tbody>
             </table>
         </div>
 
@@ -138,7 +97,36 @@
 
 </div>
 
-<script src="../advertiser/js/common.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
+<script>
+async function loadPayouts() {
+    try {
+        const data = await api('driver.payouts');
+        document.getElementById('pending-balance').textContent = formatCurrency(data.pendingAmount);
+
+        const tbody = document.getElementById('payouts-tbody');
+        if (!data.history || data.history.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No hay pagos aún</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.history.map(p => `
+            <tr>
+                <td class="p-4 font-medium">${p.paid_at ? new Date(p.paid_at).toLocaleDateString('es-PA') : new Date(p.created_at).toLocaleDateString('es-PA')}</td>
+                <td class="p-4 text-gray-500">${p.period_start || '—'} / ${p.period_end || '—'}</td>
+                <td class="p-4">${p.scans || 0}</td>
+                <td class="p-4 font-bold text-[#003366]">${formatCurrency(p.amount)}</td>
+                <td class="p-4">
+                    <span class="${p.status === 'paid' ? 'bg-green-100 text-green-700' : p.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'} px-3 py-1 rounded-full text-xs font-bold">${p.status === 'paid' ? 'PAGADO' : p.status === 'pending' ? 'PENDIENTE' : 'CANCELADO'}</span>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Error loading payouts:', err);
+    }
+}
+loadPayouts();
+</script>
 </body>
 </html>

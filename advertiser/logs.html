@@ -58,8 +58,8 @@
             <div class="flex items-center gap-3 px-4 py-2">
                 <div class="w-8 h-8 bg-[#003366] rounded-full flex items-center justify-center text-white text-sm font-bold">T</div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">Taller Central</p>
-                    <p class="text-xs text-gray-500">Plan Pro</p>
+                    <p class="text-sm font-semibold text-gray-800 sidebar-user-name">Usuario</p>
+                    <p class="text-xs text-gray-500">Anunciante</p>
                 </div>
             </div>
         </div>
@@ -228,10 +228,43 @@
 
 </div>
 
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="js/common.js"></script>
 <script src="js/mobile.js"></script>
 <script>
     setActiveNav('logs.html');
+
+    async function loadLogs() {
+        try {
+            const data = await api('advertiser.logs');
+            const tbody = document.querySelector('tbody');
+            if (!data.logs || data.logs.length === 0) {
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No hay transiciones aún</td></tr>';
+                return;
+            }
+            if (tbody) {
+                document.querySelector('.overflow-x-auto table tbody').innerHTML = data.logs.map(l => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-4">
+                            <p class="font-medium text-gray-800">${new Date(l.created_at).toLocaleDateString('es-PA')}</p>
+                            <p class="text-xs text-gray-500">${new Date(l.created_at).toLocaleTimeString()}</p>
+                        </td>
+                        <td class="p-4">
+                            <span class="font-bold text-[#003366]">${l.plate_number || '#' + l.vehicle_id}</span>
+                            <p class="text-xs text-gray-500">${l.model || ''}</p>
+                        </td>
+                        <td class="p-4"><span class="bg-${l.event_type === 'scan' ? 'green' : 'blue'}-100 text-${l.event_type === 'scan' ? 'green' : 'blue'}-700 px-2 py-1 rounded text-xs font-medium">${l.event_type === 'scan' ? 'Mini-Sitio' : 'Redirección'}</span></td>
+                        <td class="p-4"><p class="text-xs text-gray-600">📱 ${l.plate_number || ''}</p></td>
+                        <td class="p-4"><span class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] text-blue-900 block max-w-[200px] truncate">${l.campaign_name || ''}</span></td>
+                    </tr>
+                `).join('');
+            }
+        } catch (err) {
+            console.error('Error loading logs:', err);
+        }
+    }
+    loadLogs();
 </script>
 </body>
 </html>

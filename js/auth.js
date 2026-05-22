@@ -4,7 +4,6 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const password = this.querySelector('input[type="password"]').value;
 
     try {
-        // JSON-RPC request to /rpc endpoint
         const response = await fetch('/rpc', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -19,8 +18,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         const rpcResponse = await response.json();
 
         if (rpcResponse.result && rpcResponse.result.success) {
-            // Use server-provided redirect based on user role
-            window.location.href = rpcResponse.result.redirect;
+            const { token, user, redirect } = rpcResponse.result;
+
+            document.cookie = `token=${token}; Max-Age=86400; Path=/; SameSite=Lax`;
+            localStorage.setItem('pubtaxi_user', JSON.stringify(user));
+
+            window.location.href = redirect;
         } else if (rpcResponse.error) {
             alert(rpcResponse.error.message || 'Error al iniciar sesión');
         } else {

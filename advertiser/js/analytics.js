@@ -1,25 +1,12 @@
 async function initCharts() {
     try {
-        const response = await fetch('/rpc', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                jsonrpc: "2.0",
-                method: "stats.get",
-                params: { days: 7 },
-                id: 1
-            })
-        });
-        const rpcResponse = await response.json();
+        const data = await api('advertiser.stats', { days: 30 });
 
-        if (rpcResponse.error) {
-            console.error('RPC Error:', rpcResponse.error);
-            return;
-        }
+        document.getElementById('total-scans').textContent = data.totalScans.toLocaleString();
+        document.getElementById('today-scans').textContent = data.todayScans;
+        document.getElementById('avg-daily').textContent = data.dailyAvg;
+        document.getElementById('active-campaigns').textContent = data.activeCampaigns;
 
-        const data = rpcResponse.result;
-
-        // Daily Chart
         const dailyLabels = data.daily.map(d => d.date);
         const dailyValues = data.daily.map(d => d.count);
 
@@ -28,7 +15,7 @@ async function initCharts() {
             data: {
                 labels: dailyLabels.length ? dailyLabels : ['Sin datos'],
                 datasets: [{
-                    label: 'Escaneos Reales',
+                    label: 'Escaneos',
                     data: dailyValues.length ? dailyValues : [0],
                     borderColor: '#003366',
                     backgroundColor: 'rgba(0, 51, 102, 0.05)',
@@ -40,14 +27,13 @@ async function initCharts() {
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // Hourly Chart
         const hourlyLabels = ['00', '04', '08', '12', '16', '20'];
         const hourlyValues = new Array(6).fill(0);
 
         data.hourly.forEach(h => {
             const hour = parseInt(h.hour);
             const index = Math.floor(hour / 4);
-            hourlyValues[index] += h.count;
+            if (index >= 0 && index < 6) hourlyValues[index] += h.count;
         });
 
         new Chart(document.getElementById('hourlyChart').getContext('2d'), {
@@ -64,9 +50,25 @@ async function initCharts() {
             options: { responsive: true, maintainAspectRatio: false }
         });
 
+        const perfContainer = document.getElementById('campaign-perf');
+        if (perfContainer && data.campaigns.length > 0) {
+            perfContainer.innerHTML = data.campaigns.map(c => `
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-xl">
+                    <div>
+                        <p class="font-semibold text-sm">${c.name || 'Sin nombre'}</p>
+                        <p class="text-xs text-gray-500">${c.status === 'active' ? 'Activa' : 'Pausada'}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
     } catch (err) {
         console.error('Error loading stats:', err);
     }
 }
 
-initCharts();
+document.addEventListener('DOMContentLoaded', () => {
+    const user = getUser();
+    if (!user) { window.location.href = '/auth.html'; return; }
+    initCharts();
+});

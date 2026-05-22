@@ -4,9 +4,6 @@ import { toBase62, fromBase62 } from './src/utils.js';
 
 export default {
   fetch: async (request, env, ctx) => {
-    // Clone URL before potential modification
-    const url = new URL(request.url);
-    const path = url.pathname.split('/').filter(Boolean);
     const url = new URL(request.url);
     const path = url.pathname.split('/').filter(Boolean);
 

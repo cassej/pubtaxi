@@ -12,7 +12,6 @@
 
 <div class="flex min-h-screen">
 
-    <!-- Mobile Header -->
     <header class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm z-50 px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 bg-[#FFB800] rounded-md flex items-center justify-center font-bold text-[#003366]">P</div>
@@ -25,7 +24,6 @@
         </button>
     </header>
 
-    <!-- Sidebar -->
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-sm transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
         <div class="p-6 border-b border-gray-100 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -61,25 +59,26 @@
             <div class="flex items-center gap-3 px-4 py-2">
                 <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">A</div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">Admin</p>
+                    <p class="text-sm font-semibold text-gray-800 sidebar-user-name">Admin</p>
                     <p class="text-xs text-gray-500">Administrador</p>
                 </div>
             </div>
         </div>
     </aside>
 
-    <!-- Overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
     <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
-        <h1 class="text-xl lg:text-2xl font-bold text-[#003366] mb-6">👥 Usuarios</h1>
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl lg:text-2xl font-bold text-[#003366]">👥 Usuarios</h1>
+            <button onclick="showCreateModal()" class="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-950 transition">+ Nuevo Usuario</button>
+        </div>
 
-        <!-- Tabs -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6">
             <div class="flex border-b border-gray-200">
-                <button onclick="switchTab('advertisers')" id="tab-advertisers" class="px-6 py-3 text-sm font-medium border-b-2 border-[#003366] text-[#003366]">Anunciantes (48)</button>
-                <button onclick="switchTab('drivers')" id="tab-drivers" class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-[#003366]">Taxistas (108)</button>
-                <button onclick="switchTab('admins')" id="tab-admins" class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-[#003366]">Admins (3)</button>
+                <button onclick="switchTab('advertisers')" id="tab-advertisers" class="px-6 py-3 text-sm font-medium border-b-2 border-[#003366] text-[#003366]">Anunciantes <span id="count-advertisers" class="text-xs ml-1">(0)</span></button>
+                <button onclick="switchTab('drivers')" id="tab-drivers" class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-[#003366]">Taxistas <span id="count-drivers" class="text-xs ml-1">(0)</span></button>
+                <button onclick="switchTab('admins')" id="tab-admins" class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-[#003366]">Admins <span id="count-admins" class="text-xs ml-1">(0)</span></button>
             </div>
         </div>
 
@@ -90,36 +89,11 @@
                         <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase font-bold border-b">
                             <th class="p-4">Nombre</th>
                             <th class="p-4">Email</th>
-                            <th class="p-4">Plan</th>
                             <th class="p-4">Estado</th>
                             <th class="p-4">Registrado</th>
-                            <th class="p-4 text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm divide-y divide-gray-100">
-                        <tr class="hover:bg-gray-50">
-                            <td class="p-4 font-medium">Taller Central</td>
-                            <td class="p-4 text-gray-500">contacto@tallercentralpty.com</td>
-                            <td class="p-4"><span class="bg-[#FFB800] text-[#003366] px-2 py-1 rounded text-xs font-bold">PRO</span></td>
-                            <td class="p-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">ACTIVO</span></td>
-                            <td class="p-4 text-gray-500">15 May 2026</td>
-                            <td class="p-4 text-right">
-                                <button class="text-[#003366] hover:underline text-xs font-medium mr-3">Editar</button>
-                                <button class="text-red-600 hover:underline text-xs font-medium">Bloquear</button>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-gray-50">
-                            <td class="p-4 font-medium">Restaurante Mi Casa</td>
-                            <td class="p-4 text-gray-500">info@micasarestaurant.com</td>
-                            <td class="p-4"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-bold">STARTER</span></td>
-                            <td class="p-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">ACTIVO</span></td>
-                            <td class="p-4 text-gray-500">10 May 2026</td>
-                            <td class="p-4 text-right">
-                                <button class="text-[#003366] hover:underline text-xs font-medium mr-3">Editar</button>
-                                <button class="text-red-600 hover:underline text-xs font-medium">Bloquear</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="tbody-advertisers" class="text-sm divide-y divide-gray-100"></tbody>
                 </table>
             </div>
         </div>
@@ -131,25 +105,11 @@
                         <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase font-bold border-b">
                             <th class="p-4">Nombre</th>
                             <th class="p-4">Email</th>
-                            <th class="p-4">Vehículos</th>
                             <th class="p-4">Estado</th>
                             <th class="p-4">Registrado</th>
-                            <th class="p-4 text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm divide-y divide-gray-100">
-                        <tr class="hover:bg-gray-50">
-                            <td class="p-4 font-medium">Juan Pérez</td>
-                            <td class="p-4 text-gray-500">juan.taxi@gmail.com</td>
-                            <td class="p-4">2</td>
-                            <td class="p-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">ACTIVO</span></td>
-                            <td class="p-4 text-gray-500">20 Apr 2026</td>
-                            <td class="p-4 text-right">
-                                <button class="text-[#003366] hover:underline text-xs font-medium mr-3">Ver</button>
-                                <button class="text-red-600 hover:underline text-xs font-medium">Bloquear</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="tbody-drivers" class="text-sm divide-y divide-gray-100"></tbody>
                 </table>
             </div>
         </div>
@@ -162,40 +122,118 @@
                             <th class="p-4">Nombre</th>
                             <th class="p-4">Email</th>
                             <th class="p-4">Estado</th>
-                            <th class="p-4 text-right">Acciones</th>
+                            <th class="p-4">Registrado</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm divide-y divide-gray-100">
-                        <tr class="hover:bg-gray-50">
-                            <td class="p-4 font-medium">Admin Principal</td>
-                            <td class="p-4 text-gray-500">admin@pubtaxi.lat</td>
-                            <td class="p-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">ACTIVO</span></td>
-                            <td class="p-4 text-right">
-                                <button class="text-[#003366] hover:underline text-xs font-medium">Editar</button>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="tbody-admins" class="text-sm divide-y divide-gray-100"></tbody>
                 </table>
             </div>
         </div>
-
     </main>
 
 </div>
 
-<script src="../advertiser/js/common.js"></script>
+<!-- Create User Modal -->
+<div id="create-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+        <h3 class="font-bold text-lg mb-4">Nuevo Usuario</h3>
+        <form id="create-form" class="space-y-4">
+            <input type="text" id="new-name" placeholder="Nombre" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+            <input type="email" id="new-email" placeholder="Email" required class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+            <input type="password" id="new-password" placeholder="Contraseña" required class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+            <select id="new-role" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                <option value="advertiser">Anunciante</option>
+                <option value="publisher">Taxista</option>
+                <option value="admin">Admin</option>
+            </select>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeCreateModal()" class="flex-1 py-3 border rounded-xl text-sm font-medium">Cancelar</button>
+                <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950">Crear</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
 <script>
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        document.getElementById('content-' + tabName).classList.remove('hidden');
+let allUsers = [];
 
-        document.querySelectorAll('button[id^="tab-"]').forEach(el => {
-            el.classList.remove('border-b-2', 'border-[#003366]', 'text-[#003366]');
-            el.classList.add('text-gray-500');
-        });
-        document.getElementById('tab-' + tabName).classList.add('border-b-2', 'border-[#003366]', 'text-[#003366]');
+async function loadUsers() {
+    try {
+        const data = await api('admin.users.list');
+        allUsers = data.users || [];
+        renderTab('advertisers');
+        renderTab('drivers');
+        renderTab('admins');
+    } catch (err) {
+        console.error('Error loading users:', err);
     }
+}
+
+function renderTab(role) {
+    const roleMap = { advertisers: 'advertiser', drivers: 'publisher', admins: 'admin' };
+    const dbRole = roleMap[role];
+    const users = allUsers.filter(u => u.role === dbRole);
+    document.getElementById(`count-${role}`).textContent = `(${users.length})`;
+    const tbody = document.getElementById(`tbody-${role}`);
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No hay usuarios</td></tr>';
+        return;
+    }
+    tbody.innerHTML = users.map(u => `
+        <tr class="hover:bg-gray-50">
+            <td class="p-4 font-medium">${u.name || '-'}</td>
+            <td class="p-4 text-gray-500">${u.email}</td>
+            <td class="p-4"><span class="${u.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-2 py-1 rounded-full text-xs font-bold">${u.status === 'active' ? 'ACTIVO' : 'BLOQUEADO'}</span></td>
+            <td class="p-4 text-gray-500">${new Date(u.created_at).toLocaleDateString('es-PA')}</td>
+        </tr>
+    `).join('');
+}
+
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+    document.querySelectorAll('button[id^="tab-"]').forEach(el => {
+        el.classList.remove('border-b-2', 'border-[#003366]', 'text-[#003366]');
+        el.classList.add('text-gray-500');
+    });
+    document.getElementById('tab-' + tabName).classList.add('border-b-2', 'border-[#003366]', 'text-[#003366]');
+}
+
+function showCreateModal() {
+    document.getElementById('create-modal').classList.remove('hidden');
+}
+
+function closeCreateModal() {
+    document.getElementById('create-modal').classList.add('hidden');
+}
+
+document.getElementById('create-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+    try {
+        await api('admin.users.create', {
+            email: document.getElementById('new-email').value,
+            password: document.getElementById('new-password').value,
+            name: document.getElementById('new-name').value,
+            role: document.getElementById('new-role').value
+        });
+        closeCreateModal();
+        this.reset();
+        loadUsers();
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Crear';
+    }
+});
+
+loadUsers();
 </script>
 </body>
 </html>

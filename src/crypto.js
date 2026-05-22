@@ -1,3 +1,13 @@
+function b64UrlEncode(str) {
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function b64UrlDecode(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  return atob(str);
+}
+
 export async function hashPassword(password) {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
@@ -23,8 +33,8 @@ export async function timingSafeEqual(a, b) {
 
 export async function signJWT(payload, secret) {
   const encoder = new TextEncoder();
-  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const content = btoa(JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + 86400 }));
+  const header = b64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const content = b64UrlEncode(JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + 86400 }));
   
   const key = await crypto.subtle.importKey(
     "raw",
@@ -40,10 +50,43 @@ export async function signJWT(payload, secret) {
     encoder.encode(`${header}.${content}`)
   );
   
-  const signature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  const signature = b64UrlEncode(String.fromCharCode(...new Uint8Array(signatureBuffer)));
     
   return `${header}.${content}.${signature}`;
+}
+
+export async function verifyJWT(token, secret) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const [header, content, signature] = parts;
+
+    const encoder = new TextEncoder();
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+
+    const sigBytes = Uint8Array.from(b64UrlDecode(signature), c => c.charCodeAt(0));
+
+    const valid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      sigBytes,
+      encoder.encode(`${header}.${content}`)
+    );
+
+    if (!valid) return null;
+
+    const payload = JSON.parse(b64UrlDecode(content));
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
 }

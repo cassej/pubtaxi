@@ -59,7 +59,7 @@
             <div class="flex items-center gap-3 px-4 py-2">
                 <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">A</div>
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">Admin</p>
+                    <p class="text-sm font-semibold text-gray-800 sidebar-user-name">Admin</p>
                     <p class="text-xs text-gray-500">Administrador</p>
                 </div>
             </div>
@@ -76,40 +76,13 @@
                 <thead>
                     <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase font-bold border-b">
                         <th class="p-4">Empresa</th>
-                        <th class="p-4">Plan</th>
                         <th class="p-4">Vehículos</th>
                         <th class="p-4">Escaneos Mes</th>
-                        <th class="p-4">Inicio</th>
+                        <th class="p-4">URL</th>
                         <th class="p-4">Estado</th>
-                        <th class="p-4 text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="text-sm divide-y divide-gray-100">
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-4 font-medium">Taller Central</td>
-                        <td class="p-4"><span class="bg-[#FFB800] text-[#003366] px-2 py-1 rounded text-xs font-bold">PRO</span></td>
-                        <td class="p-4">10</td>
-                        <td class="p-4 font-bold text-[#003366]">524</td>
-                        <td class="p-4 text-gray-500">1 May 2026</td>
-                        <td class="p-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">ACTIVA</span></td>
-                        <td class="p-4 text-right">
-                            <button class="text-[#003366] hover:underline text-xs font-medium mr-3">Ver</button>
-                            <button class="text-orange-600 hover:underline text-xs font-medium">Pausar</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-4 font-medium">Restaurante Mi Casa</td>
-                        <td class="p-4"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-bold">STARTER</span></td>
-                        <td class="p-4">5</td>
-                        <td class="p-4 font-bold text-[#003366]">186</td>
-                        <td class="p-4 text-gray-500">10 May 2026</td>
-                        <td class="p-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">ACTIVA</span></td>
-                        <td class="p-4 text-right">
-                            <button class="text-[#003366] hover:underline text-xs font-medium mr-3">Ver</button>
-                            <button class="text-orange-600 hover:underline text-xs font-medium">Pausar</button>
-                        </td>
-                    </tr>
-                </tbody>
+                <tbody id="campaigns-tbody" class="text-sm divide-y divide-gray-100"></tbody>
             </table>
         </div>
 
@@ -117,7 +90,32 @@
 
 </div>
 
-<script src="../advertiser/js/common.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
+<script>
+async function loadCampaigns() {
+    try {
+        const data = await api('admin.campaigns.list');
+        const tbody = document.getElementById('campaigns-tbody');
+        if (!data.campaigns || data.campaigns.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No hay campañas</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.campaigns.map(c => `
+            <tr class="hover:bg-gray-50">
+                <td class="p-4 font-medium">${c.name || 'Sin nombre'}<br><span class="text-xs text-gray-400">${c.advertiser_name || ''}</span></td>
+                <td class="p-4">${c.vehicle_count || 0}</td>
+                <td class="p-4 font-bold text-[#003366]">${c.scans_month || 0}</td>
+                <td class="p-4 text-xs text-gray-500 max-w-[200px] truncate">${c.target_url || '—'}</td>
+                <td class="p-4"><span class="${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'} px-2 py-1 rounded-full text-xs font-bold">${(c.status || '').toUpperCase()}</span></td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error('Error loading campaigns:', err);
+    }
+}
+loadCampaigns();
+</script>
 </body>
 </html>
