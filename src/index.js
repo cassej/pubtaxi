@@ -1,5 +1,5 @@
 import { renderMinisite } from './minisite.js';
-import * as apiHandlers from './api-handlers.js';
+import { handleJsonRpc } from './api-handlers.js';
 
 const BASE62_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -96,14 +96,19 @@ export default {
       });
     }
 
-    // 2-6. API Routes - use shared handlers
+    // 2. JSON-RPC API endpoint
+    if (path[0] === 'rpc' && request.method === 'POST') {
+      return handleJsonRpc(request, env, ctx);
+    }
+
+    // Legacy API routes (backward compatibility)
     if (path[0] === 'api') {
       const action = path[1];
-      if (action === 'event' && request.method === 'POST') return apiHandlers.handleEventTrack(request, env, ctx);
-      if (action === 'login' && request.method === 'POST') return apiHandlers.handleLogin(request, env);
-      if (action === 'generate-qr' && request.method === 'POST') return apiHandlers.handleGenerateQr(request, env);
-      if (action === 'update-campaign' && request.method === 'POST') return apiHandlers.handleUpdateCampaign(request, env);
-      if (action === 'stats') return apiHandlers.handleStats(env);
+      if (action === 'event' && request.method === 'POST') return handleJsonRpc(request, env, ctx);
+      if (action === 'login' && request.method === 'POST') return handleJsonRpc(request, env, ctx);
+      if (action === 'generate-qr' && request.method === 'POST') return handleJsonRpc(request, env, ctx);
+      if (action === 'update-campaign' && request.method === 'POST') return handleJsonRpc(request, env, ctx);
+      if (action === 'stats') return handleJsonRpc(request, env, ctx);
     }
 
     // FALLBACK: Serve static content from Pages

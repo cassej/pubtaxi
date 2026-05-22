@@ -1,88 +1,217 @@
 import { hashPassword, signJWT, timingSafeEqual } from './crypto.js';
 import { fromBase62, toBase62 } from './index.js';
 
-export async function handleEventTrack(request, env, context) {
-  if (request.headers.get("content-type") !== "application/json") {
-    return new Response("Invalid content-type", { status: 415 });
-  }
-  try {
-    const { qr_id, event_type, metadata } = await request.json();
+// JSON-RPC 2.0 Error codes
+const ERROR_CODES = {
+  PARSE_ERROR: -32700,
+  INVALID_REQUEST: -32600,
+  METHOD_NOT_FOUND: -32601,
+  INVALID_PARAMS: -32602,
+  INTERNAL_ERROR: -32603
+};
+
+function jsonRpcError(code, message, id = null, data = null) {
+  const response = {
+    jsonrpc: "2.0",
+    error: { code, message, ...(data && { data }) },
+    id
+  };
+  return new Response(JSON.stringify(response), {
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+  });
+}
+
+function jsonRpcSuccess(result, id) {
+  return new Response(JSON.stringify({
+    jsonrpc: "2.0",
+    result,
+    id
+  }), {
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+  });
+}
+
+// Method handlers
+const METHODS = {
+  'event.track': async (params, env, context) => {
+    const { qr_id, event_type, metadata } = params;
+    if (!qr_id || !event_type) throw new Error("Missing required params: qr_id, event_type");
+
     const qrNumericId = typeof qr_id === 'string' ? fromBase62(qr_id) : qr_id;
-    const clientId = request.headers.get("Cookie")?.match(/puid=([^;]+)/)?.[1];
+    const clientId = context.request.headers.get("Cookie")?.match(/puid=([^;]+)/)?.[1];
+
     context.waitUntil(env.DB.prepare(`INSERT INTO events (qr_id, client_id, event_type, metadata) VALUES (?, ?, ?, ?)`)
-        .bind(qrNumericId, clientId, event_type, JSON.stringify(metadata)).run());
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 });
-  }
-}
+        .bind(qrNumericId, clientId, event_type, JSON.stringify(metadata || {})).run());
 
-export async function handleLogin(request, env) {
-  if (request.headers.get("content-type") !== "application/json") {
-    return new Response("Invalid content-type", { status: 415 });
-  }
-  try {
-    const { email, password } = await request.json();
-    const user = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
+    return { success: true };
+  },
+
+  'auth.login': async (params, env) => {
+    const { email, password } = params;
+    if (!email || !password) throw new Error("Missing required params: email, password");
+
+    const user = await env.DB.prepare("SELECT id, email, password_hash, role FROM users WHERE email = ?").bind(email).first();
+    if (!user) throw new Error("Invalid credentials");
+
     const incomingHash = await hashPassword(password);
-    if (user && await timingSafeEqual(user.password_hash, incomingHash)) {
-      const token = await signJWT({ id: user.id, role: user.role }, env.JWT_SECRET);
-      return new Response(JSON.stringify({ success: true, role: user.role }), {
-        headers: {
-          "Content-Type": "application/json",
-          "Set-Cookie": `token=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400`
-        }
-      });
+    if (!await timingSafeEqual(user.password_hash, incomingHash)) {
+      throw new Error("Invalid credentials");
     }
-    return new Response(JSON.stringify({ error: "Invalid credentials" }), { status: 401 });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 });
-  }
-}
 
-export async function handleGenerateQr(request, env) {
-  if (request.headers.get("content-type") !== "application/json") {
-    return new Response("Invalid content-type", { status: 415 });
-  }
-  try {
-    const { vehicle_id, campaign_id, position } = await request.json();
+    const token = await signJWT({ id: user.id, role: user.role }, env.JWT_SECRET);
+
+    // Determine redirect based on role
+    const dashboardMap = {
+      admin: '/admin/',
+      advertiser: '/advertiser/',
+      driver: '/driver/'
+    };
+    const redirect = dashboardMap[user.role] || '/';
+
+    return {
+      success: true,
+      token,
+      user: { id: user.id, email: user.email, role: user.role },
+      redirect
+    };
+  },
+
+  'qr.generate': async (params, env) => {
+    const { vehicle_id, campaign_id, position } = params;
+    if (!vehicle_id || !campaign_id) throw new Error("Missing required params: vehicle_id, campaign_id");
+
     const result = await env.DB.prepare("INSERT INTO qr_codes (vehicle_id, campaign_id, position) VALUES (?, ?, ?)")
         .bind(vehicle_id, campaign_id, position).run();
     const lastId = result.meta.last_row_id;
-    return new Response(JSON.stringify({ shortId: toBase62(lastId), id: lastId }), {
+
+    return { shortId: toBase62(lastId), id: lastId };
+  },
+
+  'campaign.update': async (params, env) => {
+    const { id, target_url, redirect_mode } = params;
+    if (!id || !target_url) throw new Error("Missing required params: id, target_url");
+
+    await env.DB.prepare("UPDATE campaigns SET target_url = ?, status = 'active' WHERE id = ?")
+        .bind(target_url, id).run();
+    if (redirect_mode) {
+      await env.DB.prepare("UPDATE qr_codes SET redirect_mode = ? WHERE campaign_id = ?")
+          .bind(redirect_mode, id).run();
+    }
+
+    return { success: true };
+  },
+
+  'stats.get': async (params, env) => {
+    const days = params.days || 7;
+    const daily = await env.DB.prepare(
+      `SELECT date(created_at) as date, count(*) as count FROM events WHERE created_at > date('now', '-${days} days') GROUP BY date(created_at) ORDER BY date ASC`
+    ).all();
+    const hourly = await env.DB.prepare(
+      `SELECT strftime('%H', created_at) as hour, count(*) as count FROM events GROUP BY hour`
+    ).all();
+
+    return {
+      daily: daily.results,
+      hourly: hourly.results
+    };
+  },
+
+  'user.profile': async (params, env, context) => {
+    const token = context.request.headers.get("Cookie")?.match(/token=([^;]+)/)?.[1];
+    if (!token) throw new Error("Not authenticated");
+
+    // Simple JWT verification (you might want to add this to crypto.js)
+    const parts = token.split('.');
+    if (parts.length !== 3) throw new Error("Invalid token");
+
+    const payload = JSON.parse(atob(parts[1]));
+    const user = await env.DB.prepare("SELECT id, email, role FROM users WHERE id = ?").bind(payload.id).first();
+    if (!user) throw new Error("User not found");
+
+    return { user };
+  }
+};
+
+export async function handleJsonRpc(request, env, context) {
+  if (request.headers.get("content-type") !== "application/json") {
+    return jsonRpcError(ERROR_CODES.INVALID_REQUEST, "Content-Type must be application/json");
+  }
+
+  let rpcRequest;
+  try {
+    rpcRequest = await request.json();
+  } catch (err) {
+    return jsonRpcError(ERROR_CODES.PARSE_ERROR, "Parse error");
+  }
+
+  // Handle batch requests
+  const isArray = Array.isArray(rpcRequest);
+  const requests = isArray ? rpcRequest : [rpcRequest];
+
+  const responses = [];
+
+  for (const req of requests) {
+    if (!req || typeof req !== 'object') {
+      responses.push({ jsonrpc: "2.0", error: { code: ERROR_CODES.INVALID_REQUEST, message: "Invalid Request" }, id: null });
+      continue;
+    }
+
+    if (req.jsonrpc !== "2.0" || !req.method) {
+      responses.push({ jsonrpc: "2.0", error: { code: ERROR_CODES.INVALID_REQUEST, message: "Invalid Request" }, id: req.id });
+      continue;
+    }
+
+    const method = METHODS[req.method];
+    if (!method) {
+      responses.push({ jsonrpc: "2.0", error: { code: ERROR_CODES.METHOD_NOT_FOUND, message: "Method not found" }, id: req.id });
+      continue;
+    }
+
+    try {
+      context.request = request; // Pass request for header access
+      const result = await method(req.params || {}, env, context);
+      responses.push({ jsonrpc: "2.0", result, id: req.id });
+    } catch (err) {
+      console.log(JSON.stringify({ event: "rpc_error", method: req.method, error: String(err) }));
+      responses.push({
+        jsonrpc: "2.0",
+        error: {
+          code: ERROR_CODES.INTERNAL_ERROR,
+          message: err.message || "Internal error"
+        },
+        id: req.id
+      });
+    }
+  }
+
+  if (isArray) {
+    return new Response(JSON.stringify(responses), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
     });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Database error" }), { status: 500 });
   }
+
+  return new Response(JSON.stringify(responses[0]), {
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+  });
+}
+
+// Legacy handlers for backward compatibility
+export async function handleEventTrack(request, env, context) {
+  return handleJsonRpc(request, env, context);
+}
+
+export async function handleLogin(request, env) {
+  return handleJsonRpc(request, env, {});
+}
+
+export async function handleGenerateQr(request, env) {
+  return handleJsonRpc(request, env, {});
 }
 
 export async function handleUpdateCampaign(request, env) {
-  if (request.headers.get("content-type") !== "application/json") {
-    return new Response("Invalid content-type", { status: 415 });
-  }
-  try {
-    const { id, target_url, redirect_mode } = await request.json();
-    await env.DB.prepare("UPDATE campaigns SET target_url = ?, status = 'active' WHERE id = ?").bind(target_url, id).run();
-    if (redirect_mode) await env.DB.prepare("UPDATE qr_codes SET redirect_mode = ? WHERE campaign_id = ?").bind(redirect_mode, id).run();
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Database error" }), { status: 500 });
-  }
+  return handleJsonRpc(request, env, {});
 }
 
 export async function handleStats(env) {
-  try {
-    const daily = await env.DB.prepare(`SELECT date(created_at) as date, count(*) as count FROM events WHERE created_at > date('now', '-7 days') GROUP BY date(created_at) ORDER BY date ASC`).all();
-    const hourly = await env.DB.prepare(`SELECT strftime('%H', created_at) as hour, count(*) as count FROM events GROUP BY hour`).all();
-    return new Response(JSON.stringify({ daily: daily.results, hourly: hourly.results }), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Database error" }), { status: 500 });
-  }
+  return handleJsonRpc({ json: async () => ({ method: 'stats.get', params: { days: 7 } }) }, env, {});
 }

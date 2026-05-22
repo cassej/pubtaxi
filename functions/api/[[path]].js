@@ -1,17 +1,31 @@
-import * as apiHandlers from '../../src/api-handlers.js';
+import { handleJsonRpc } from '../../src/api-handlers.js';
 
 export async function onRequest(context) {
-  const { request, env, params } = context;
+  const { request, env } = context;
   const url = new URL(request.url);
   const path = url.pathname.split('/').filter(Boolean);
 
-  const action = path[1];
+  // JSON-RPC endpoint
+  if (request.method === 'POST') {
+    return handleJsonRpc(request, env, context);
+  }
 
-  if (action === 'event' && request.method === 'POST') return apiHandlers.handleEventTrack(request, env, context);
-  if (action === 'login' && request.method === 'POST') return apiHandlers.handleLogin(request, env);
-  if (action === 'generate-qr' && request.method === 'POST') return apiHandlers.handleGenerateQr(request, env);
-  if (action === 'update-campaign' && request.method === 'POST') return apiHandlers.handleUpdateCampaign(request, env);
-  if (action === 'stats') return apiHandlers.handleStats(env);
+  // OPTIONS for CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
+    });
+  }
 
-  return new Response(JSON.stringify({ error: "API Action not found: " + action }), { status: 404 });
+  return new Response(JSON.stringify({
+    jsonrpc: "2.0",
+    error: { code: -32600, message: "Invalid Request: Use POST with JSON body" },
+    id: null
+  }), {
+    headers: { "Content-Type": "application/json" }
+  });
 }

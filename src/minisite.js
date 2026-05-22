@@ -87,7 +87,12 @@ export function renderMinisite(data, qrId) {
             await fetch('/api/event', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ qr_id: qrId, event_type: 'click_button', metadata: { btn_id: btnId } })
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "event.track",
+                    params: { qr_id: qrId, event_type: 'click_button', metadata: { btn_id: btnId } },
+                    id: 1
+                })
             });
         }
     </script>

@@ -7,26 +7,32 @@ document.querySelectorAll('.bg-white.rounded-2xl.shadow-sm.border.border-gray-10
         const taxiId = container.querySelector('.font-semibold.text-gray-800').innerText;
         const targetUrl = container.querySelector('.url-input').value;
         const redirectMode = container.querySelector('.action-select').value;
-        
+
         saveBtn.innerText = 'Guardando...';
         saveBtn.disabled = true;
 
         try {
-            // In MVP we use taxiId to find campaign, in real app use campaignId
             const response = await fetch('/api/update-campaign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    id: taxiId, // For MVP demo
-                    target_url: targetUrl,
-                    redirect_mode: redirectMode 
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "campaign.update",
+                    params: {
+                        id: taxiId,
+                        target_url: targetUrl,
+                        redirect_mode: redirectMode
+                    },
+                    id: 1
                 })
             });
 
-            if (response.ok) {
+            const rpcResponse = await response.json();
+
+            if (rpcResponse.result && rpcResponse.result.success) {
                 alert('¡Guardado con éxito!');
             } else {
-                alert('Error al guardar');
+                alert(rpcResponse.error?.message || 'Error al guardar');
             }
         } catch (err) {
             alert('Error de conexión');
