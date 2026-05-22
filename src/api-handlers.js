@@ -197,6 +197,28 @@ const METHODS = {
     return { campaigns: campaigns.results };
   },
 
+  'admin.vehicles.create': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { publisher_id, plate_number, model } = params;
+    if (!publisher_id) throw new Error("Missing required params: publisher_id");
+
+    const result = await env.DB.prepare(
+      "INSERT INTO vehicles (publisher_id, plate_number, model) VALUES (?, ?, ?)"
+    ).bind(publisher_id, plate_number || '', model || '').run();
+    return { success: true, id: result.meta.last_row_id };
+  },
+
+  'admin.campaigns.create': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { advertiser_id, name, target_url } = params;
+    if (!advertiser_id || !name) throw new Error("Missing required params: advertiser_id, name");
+
+    const result = await env.DB.prepare(
+      "INSERT INTO campaigns (advertiser_id, name, target_url) VALUES (?, ?, ?)"
+    ).bind(advertiser_id, name, target_url || '').run();
+    return { success: true, id: result.meta.last_row_id };
+  },
+
   'admin.payouts.list': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
     const payouts = await env.DB.prepare(`

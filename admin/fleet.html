@@ -69,7 +69,10 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
     <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
-        <h1 class="text-xl lg:text-2xl font-bold text-[#003366] mb-6">🚕 Flota de Vehículos</h1>
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl lg:text-2xl font-bold text-[#003366]">🚕 Flota de Vehículos</h1>
+            <button onclick="showCreateModal()" class="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-950 transition">+ Agregar Vehículo</button>
+        </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <table class="w-full text-left">
@@ -90,6 +93,23 @@
 
     </main>
 
+</div>
+
+<div id="create-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+        <h3 class="font-bold text-lg mb-4">Agregar Vehículo</h3>
+        <form id="create-form" class="space-y-4">
+            <select id="veh-publisher" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" required>
+                <option value="">Seleccionar taxista</option>
+            </select>
+            <input type="text" id="veh-model" placeholder="Modelo (ej. Toyota Corolla)" class="w-full p-3 border rounded-xl text-sm outline-none">
+            <input type="text" id="veh-plate" placeholder="Placa (ej. RI-4829)" class="w-full p-3 border rounded-xl text-sm outline-none">
+            <div class="flex gap-3">
+                <button type="button" onclick="closeCreateModal()" class="flex-1 py-3 border rounded-xl text-sm font-medium">Cancelar</button>
+                <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold">Crear</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script src="../js/api.js"></script>
@@ -119,6 +139,43 @@ async function loadFleet() {
         console.error('Error loading fleet:', err);
     }
 }
+
+async function showCreateModal() {
+    try {
+        const data = await api('admin.users.list', { role: 'publisher' });
+        const select = document.getElementById('veh-publisher');
+        select.innerHTML = '<option value="">Seleccionar taxista</option>' +
+            (data.users || []).map(u => `<option value="${u.id}">${u.name || u.email}</option>`).join('');
+    } catch (err) { console.error(err); }
+    document.getElementById('create-modal').classList.remove('hidden');
+}
+
+function closeCreateModal() {
+    document.getElementById('create-modal').classList.add('hidden');
+}
+
+document.getElementById('create-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+    try {
+        await api('admin.vehicles.create', {
+            publisher_id: parseInt(document.getElementById('veh-publisher').value),
+            model: document.getElementById('veh-model').value,
+            plate_number: document.getElementById('veh-plate').value
+        });
+        closeCreateModal();
+        this.reset();
+        loadFleet();
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Crear';
+    }
+});
+
 loadFleet();
 </script>
 </body>
