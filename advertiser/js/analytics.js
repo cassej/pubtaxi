@@ -1,30 +1,56 @@
-new Chart(document.getElementById('dailyChart').getContext('2d'), {
-    type: 'line',
-    data: {
-        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-        datasets: [{
-            label: 'Escaneos',
-            data: [30, 45, 60, 52, 80, 41, 22],
-            borderColor: '#003366',
-            backgroundColor: 'rgba(0, 51, 102, 0.05)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.3
-        }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-});
+async function initCharts() {
+    try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
 
-new Chart(document.getElementById('hourlyChart').getContext('2d'), {
-    type: 'bar',
-    data: {
-        labels: ['6-9am', '9-12pm', '12-3pm', '3-6pm', '6-9pm', '9-12am'],
-        datasets: [{
-            label: 'Escaneos',
-            data: [45, 30, 55, 90, 65, 20],
-            backgroundColor: '#FFB800',
-            borderRadius: 6
-        }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-});
+        // Daily Chart
+        const dailyLabels = data.daily.map(d => d.date);
+        const dailyValues = data.daily.map(d => d.count);
+
+        new Chart(document.getElementById('dailyChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: dailyLabels.length ? dailyLabels : ['Sin datos'],
+                datasets: [{
+                    label: 'Escaneos Reales',
+                    data: dailyValues.length ? dailyValues : [0],
+                    borderColor: '#003366',
+                    backgroundColor: 'rgba(0, 51, 102, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Hourly Chart
+        const hourlyLabels = ['00', '04', '08', '12', '16', '20'];
+        const hourlyValues = new Array(6).fill(0);
+        
+        data.hourly.forEach(h => {
+            const hour = parseInt(h.hour);
+            const index = Math.floor(hour / 4);
+            hourlyValues[index] += h.count;
+        });
+
+        new Chart(document.getElementById('hourlyChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['0-4h', '4-8h', '8-12h', '12-16h', '16-20h', '20-24h'],
+                datasets: [{
+                    label: 'Escaneos',
+                    data: hourlyValues,
+                    backgroundColor: '#FFB800',
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+    } catch (err) {
+        console.error('Error loading stats:', err);
+    }
+}
+
+initCharts();
