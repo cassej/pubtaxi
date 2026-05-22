@@ -123,7 +123,7 @@
                     </div>
                 </div>
 
-                <button onclick="alert('Guardado')" class="bg-[#FFB800] text-[#003366] px-6 py-3 rounded-xl text-sm font-bold hover:shadow-lg transition">Aplicar a Todos</button>
+                <button onclick="toast('Guardado', 'success')" class="bg-[#FFB800] text-[#003366] px-6 py-3 rounded-xl text-sm font-bold hover:shadow-lg transition">Aplicar a Todos</button>
             </div>
         </div>
 
@@ -134,6 +134,7 @@
 </div>
 
 <script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
 <script src="../js/sidebar.js"></script>
 <script src="js/common.js"></script>
 <script src="js/mobile.js"></script>
@@ -182,9 +183,9 @@
         btn.textContent = 'Guardando...';
         try {
             await api('campaign.update', { id: campaignId, target_url: targetUrl, redirect_mode: redirectMode });
-            alert('¡Guardado con éxito!');
+            toast('¡Guardado con éxito!', 'success');
         } catch (err) {
-            alert(err.message);
+            toast(err.message, 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = 'Guardar';

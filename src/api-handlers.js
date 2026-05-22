@@ -208,6 +208,17 @@ const METHODS = {
     return { success: true, id: result.meta.last_row_id };
   },
 
+  'admin.vehicles.update': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { id, publisher_id, plate_number, model, status } = params;
+    if (!id) throw new Error("Missing required params: id");
+
+    await env.DB.prepare(
+      "UPDATE vehicles SET publisher_id = ?, plate_number = ?, model = ?, status = ? WHERE id = ?"
+    ).bind(publisher_id, plate_number || '', model || '', status || 'active', id).run();
+    return { success: true };
+  },
+
   'admin.campaigns.create': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
     const { advertiser_id, name, target_url } = params;
@@ -217,6 +228,45 @@ const METHODS = {
       "INSERT INTO campaigns (advertiser_id, name, target_url) VALUES (?, ?, ?)"
     ).bind(advertiser_id, name, target_url || '').run();
     return { success: true, id: result.meta.last_row_id };
+  },
+
+  'admin.campaigns.update': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { id, advertiser_id, name, target_url, status } = params;
+    if (!id) throw new Error("Missing required params: id");
+
+    await env.DB.prepare(
+      "UPDATE campaigns SET advertiser_id = ?, name = ?, target_url = ?, status = ? WHERE id = ?"
+    ).bind(advertiser_id, name, target_url || '', status || 'active', id).run();
+    return { success: true };
+  },
+
+  'admin.users.toggleStatus': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { id } = params;
+    if (!id) throw new Error("Missing required params: id");
+
+    const user = await env.DB.prepare("SELECT status FROM users WHERE id = ?").bind(id).first();
+    if (!user) throw new Error("User not found");
+
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    await env.DB.prepare("UPDATE users SET status = ? WHERE id = ?").bind(newStatus, id).run();
+    return { success: true, status: newStatus };
+  },
+
+  'admin.users.update': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { id, name, email, role } = params;
+    if (!id) throw new Error("Missing required params: id");
+
+    if (email) {
+      await env.DB.prepare("UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?")
+        .bind(name || '', email, role, id).run();
+    } else {
+      await env.DB.prepare("UPDATE users SET name = ?, role = ? WHERE id = ?")
+        .bind(name || '', role, id).run();
+    }
+    return { success: true };
   },
 
   'admin.payouts.list': async (params, env, context) => {

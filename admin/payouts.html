@@ -113,6 +113,7 @@
 </div>
 
 <script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
 <script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
 <script>
@@ -174,7 +175,7 @@ document.getElementById('create-form').addEventListener('submit', async function
         this.reset();
         loadPayouts();
     } catch (err) {
-        alert(err.message);
+        toast(err.message, 'error');
     } finally {
         btn.disabled = false;
         btn.textContent = 'Crear';

@@ -36,25 +36,13 @@
                 </svg>
             </button>
         </div>
-
         <nav class="p-4 space-y-1">
-            <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
-                📊 <span>Dashboard</span>
-            </a>
-            <a href="users.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
-                👥 <span>Usuarios</span>
-            </a>
-            <a href="fleet.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
-                🚕 <span>Flota</span>
-            </a>
-            <a href="campaigns.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium bg-[#003366]/10 text-[#003366] border-l-4 border-[#003366]">
-                📢 <span>Campañas</span>
-            </a>
-            <a href="payouts.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
-                💸 <span>Pagos</span>
-            </a>
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">📊 <span>Dashboard</span></a>
+            <a href="users.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">👥 <span>Usuarios</span></a>
+            <a href="fleet.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">🚕 <span>Flota</span></a>
+            <a href="campaigns.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium bg-[#003366]/10 text-[#003366] border-l-4 border-[#003366]">📢 <span>Campañas</span></a>
+            <a href="payouts.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">💸 <span>Pagos</span></a>
         </nav>
-
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
             <div class="flex items-center gap-3 px-4 py-2">
                 <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">A</div>
@@ -70,109 +58,174 @@
 
     <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-xl lg:text-2xl font-bold text-[#003366]">📢 Campañas Activas</h1>
-            <button onclick="showCreateModal()" class="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-950 transition">+ Nueva Campaña</button>
+            <h1 class="text-xl lg:text-2xl font-bold text-[#003366]">📢 Campañas</h1>
+            <button onclick="showCreateModal()" class="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-950 transition whitespace-nowrap">+ Nueva Campaña</button>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <table class="w-full text-left">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden overflow-x-auto">
+            <table class="w-full text-left min-w-[600px]">
                 <thead>
                     <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase font-bold border-b">
-                        <th class="p-4">Empresa</th>
-                        <th class="p-4">Vehículos</th>
-                        <th class="p-4">Escaneos Mes</th>
+                        <th class="p-4">Nombre</th>
+                        <th class="p-4">Anunciante</th>
                         <th class="p-4">URL</th>
+                        <th class="p-4">Clics</th>
                         <th class="p-4">Estado</th>
+                        <th class="p-4">Creada</th>
+                        <th class="p-4 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="campaigns-tbody" class="text-sm divide-y divide-gray-100"></tbody>
             </table>
         </div>
-
     </main>
 
 </div>
 
-<div id="create-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+<div id="create-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
         <h3 class="font-bold text-lg mb-4">Nueva Campaña</h3>
         <form id="create-form" class="space-y-4">
-            <select id="camp-advertiser" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" required>
+            <select id="new-advertiser" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" required>
                 <option value="">Seleccionar anunciante</option>
             </select>
-            <input type="text" id="camp-name" placeholder="Nombre de la campaña" class="w-full p-3 border rounded-xl text-sm outline-none" required>
-            <input type="url" id="camp-url" placeholder="URL de destino (opcional)" class="w-full p-3 border rounded-xl text-sm outline-none">
+            <input type="text" id="new-name" placeholder="Nombre de la campaña" required class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+            <input type="url" id="new-url" placeholder="URL de destino" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
             <div class="flex gap-3">
                 <button type="button" onclick="closeCreateModal()" class="flex-1 py-3 border rounded-xl text-sm font-medium">Cancelar</button>
-                <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold">Crear</button>
+                <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950">Crear</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="edit-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+        <h3 class="font-bold text-lg mb-4">Editar Campaña</h3>
+        <form id="edit-form" class="space-y-4">
+            <input type="hidden" id="edit-id">
+            <select id="edit-advertiser" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                <option value="">Seleccionar anunciante</option>
+            </select>
+            <input type="text" id="edit-name" placeholder="Nombre" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+            <input type="url" id="edit-url" placeholder="URL de destino" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+            <select id="edit-status" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                <option value="active">Activa</option>
+                <option value="inactive">Inactiva</option>
+            </select>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeEditModal()" class="flex-1 py-3 border rounded-xl text-sm font-medium">Cancelar</button>
+                <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950">Guardar</button>
             </div>
         </form>
     </div>
 </div>
 
 <script src="../js/api.js"></script>
+<script src="../js/ui.js"></script>
 <script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
 <script>
+let allCampaigns = [];
+let advertisers = [];
+
+async function load() {
+    await Promise.all([loadCampaigns(), loadAdvertisers()]);
+}
+
 async function loadCampaigns() {
     try {
         const data = await api('admin.campaigns.list');
-        const tbody = document.getElementById('campaigns-tbody');
-        if (!data.campaigns || data.campaigns.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No hay campañas</td></tr>';
-            return;
-        }
-        tbody.innerHTML = data.campaigns.map(c => `
-            <tr class="hover:bg-gray-50">
-                <td class="p-4 font-medium">${c.name || 'Sin nombre'}<br><span class="text-xs text-gray-400">${c.advertiser_name || ''}</span></td>
-                <td class="p-4">${c.vehicle_count || 0}</td>
-                <td class="p-4 font-bold text-[#003366]">${c.scans_month || 0}</td>
-                <td class="p-4 text-xs text-gray-500 max-w-[200px] truncate">${c.target_url || '—'}</td>
-                <td class="p-4"><span class="${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'} px-2 py-1 rounded-full text-xs font-bold">${(c.status || '').toUpperCase()}</span></td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        console.error('Error loading campaigns:', err);
-    }
+        allCampaigns = data.campaigns || [];
+        renderCampaigns();
+    } catch (err) { toast(err.message, 'error'); }
 }
 
-async function showCreateModal() {
+async function loadAdvertisers() {
     try {
-        const data = await api('admin.users.list', { role: 'advertiser' });
-        const select = document.getElementById('camp-advertiser');
-        select.innerHTML = '<option value="">Seleccionar anunciante</option>' +
-            (data.users || []).map(u => `<option value="${u.id}">${u.name || u.email}</option>`).join('');
-    } catch (err) { console.error(err); }
-    document.getElementById('create-modal').classList.remove('hidden');
+        const data = await api('admin.users.list');
+        advertisers = (data.users || []).filter(u => u.role === 'advertiser');
+        populateSelects();
+    } catch (err) { /* ignore */ }
 }
 
-function closeCreateModal() {
-    document.getElementById('create-modal').classList.add('hidden');
+function populateSelects() {
+    const html = advertisers.map(a => `<option value="${a.id}">${a.name || a.email} (${a.email})</option>`).join('');
+    document.getElementById('new-advertiser').innerHTML = '<option value="">Seleccionar anunciante</option>' + html;
+    document.getElementById('edit-advertiser').innerHTML = '<option value="">Seleccionar anunciante</option>' + html;
 }
+
+function renderCampaigns() {
+    const tbody = document.getElementById('campaigns-tbody');
+    if (allCampaigns.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-gray-400">No hay campañas</td></tr>';
+        return;
+    }
+    tbody.innerHTML = allCampaigns.map(c => `
+        <tr class="hover:bg-gray-50">
+            <td class="p-4 font-medium">${c.name}</td>
+            <td class="p-4">${c.advertiser_name || '-'}</td>
+            <td class="p-4 text-gray-500 max-w-[200px] truncate"><a href="${c.target_url}" target="_blank" class="hover:underline">${c.target_url || '-'}</a></td>
+            <td class="p-4 text-center font-bold">${c.click_count || 0}</td>
+            <td class="p-4"><span class="${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-2 py-1 rounded-full text-xs font-bold">${(c.status || 'active').toUpperCase()}</span></td>
+            <td class="p-4 text-gray-500 whitespace-nowrap">${new Date(c.created_at).toLocaleDateString('es-PA')}</td>
+            <td class="p-4 text-right">
+                <button onclick="editCampaign(${c.id})" class="text-[#003366] hover:underline text-xs font-medium">Editar</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function showCreateModal() { document.getElementById('create-modal').classList.remove('hidden'); }
+function closeCreateModal() { document.getElementById('create-modal').classList.add('hidden'); }
+function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
 document.getElementById('create-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const btn = this.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Creando...';
+    btn.disabled = true; btn.textContent = 'Creando...';
     try {
         await api('admin.campaigns.create', {
-            advertiser_id: parseInt(document.getElementById('camp-advertiser').value),
-            name: document.getElementById('camp-name').value,
-            target_url: document.getElementById('camp-url').value
+            advertiser_id: parseInt(document.getElementById('new-advertiser').value),
+            name: document.getElementById('new-name').value,
+            target_url: document.getElementById('new-url').value
         });
-        closeCreateModal();
-        this.reset();
-        loadCampaigns();
-    } catch (err) {
-        alert(err.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Crear';
-    }
+        closeCreateModal(); this.reset(); loadCampaigns();
+        toast('Campaña creada', 'success');
+    } catch (err) { toast(err.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Crear'; }
 });
 
-loadCampaigns();
+async function editCampaign(id) {
+    const c = allCampaigns.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('edit-id').value = c.id;
+    document.getElementById('edit-name').value = c.name;
+    document.getElementById('edit-url').value = c.target_url || '';
+    document.getElementById('edit-status').value = c.status || 'active';
+    document.getElementById('edit-advertiser').value = c.advertiser_id || '';
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+document.getElementById('edit-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+        await api('admin.campaigns.update', {
+            id: parseInt(document.getElementById('edit-id').value),
+            advertiser_id: parseInt(document.getElementById('edit-advertiser').value) || null,
+            name: document.getElementById('edit-name').value,
+            target_url: document.getElementById('edit-url').value,
+            status: document.getElementById('edit-status').value
+        });
+        closeEditModal(); loadCampaigns();
+        toast('Campaña actualizada', 'success');
+    } catch (err) { toast(err.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Guardar'; }
+});
+
+load();
 </script>
 </body>
 </html>
