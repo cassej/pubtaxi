@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini-Sitio | pubtaxi.lat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; } h1, h2, h3 { font-family: 'Montserrat', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+<div class="flex min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm z-50 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-[#FFB800] rounded-md flex items-center justify-center font-bold text-[#003366]">P</div>
+            <span class="text-base font-bold text-[#003366]">pubtaxi<span class="text-[#FFB800]">.lat</span></span>
+        </div>
+        <button id="menu-toggle" class="p-2 rounded-lg hover:bg-gray-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-sm transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-[#FFB800] rounded-md flex items-center justify-center font-bold text-[#003366]">P</div>
+                <span class="text-lg font-bold text-[#003366]">pubtaxi<span class="text-[#FFB800]">.lat</span></span>
+            </div>
+            <button id="menu-close" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="p-4 space-y-1">
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                📊 <span>Analítica</span>
+            </a>
+            <a href="redirects.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                🚕 <span>Mis Anuncios</span>
+            </a>
+            <a href="builder.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium bg-[#003366]/10 text-[#003366] border-l-4 border-[#003366]">
+                📱 <span>Mini-Sitio</span>
+            </a>
+            <a href="logs.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                📋 <span>Logs</span>
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 px-4 py-2">
+                <div class="w-8 h-8 bg-[#003366] rounded-full flex items-center justify-center text-white text-sm font-bold">T</div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">Taller Central</p>
+                    <p class="text-xs text-gray-500">Plan Pro</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+
+    <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
+        <h1 class="text-xl lg:text-2xl font-bold text-[#003366] mb-6">📱 Mi Mini-Sitio</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6 max-h-[80vh] overflow-y-auto">
+                <div>
+                    <h3 class="font-bold text-lg text-gray-800">Personaliza tu Mini-Sitio Móvil</h3>
+                    <p class="text-xs text-gray-400 mt-1">Los pasajeros verán esto inmediatamente al escanear tu QR desde el auto.</p>
+                </div>
+
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">1. Identidad de tu Negocio</h4>
+
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                        <label class="text-[11px] font-bold text-gray-500 block mb-1">Logotipo del Negocio</label>
+                        <input type="file" id="input-logo" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#003366] file:text-white hover:file:bg-blue-950 cursor-pointer">
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="input-title-color" value="#1f2937" class="w-8 h-10 border-0 rounded cursor-pointer bg-transparent flex-shrink-0">
+                        <input type="text" id="input-title" value="Taller Automotriz Central" class="flex-1 p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="Nombre del negocio">
+                    </div>
+
+                    <div class="flex items-start gap-2">
+                        <input type="color" id="input-desc-color" value="#6b7280" class="w-8 h-10 border-0 rounded cursor-pointer bg-transparent flex-shrink-0 mt-0.5">
+                        <textarea id="input-desc" class="flex-1 p-3 border rounded-xl text-sm outline-none focus:border-[#003366] text-gray-500 text-xs" rows="2" placeholder="Breve descripción">Mantenimiento preventivo, frenos, suspensión y diagnóstico por computadora en Ciudad de Panamá.</textarea>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2 border-t border-gray-100">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">2. Fondo</h4>
+
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                        <label class="text-[11px] font-bold text-gray-500 block mb-2">Tipo de Fondo</label>
+                        <select id="bg-type" class="w-full p-2 bg-white border rounded-lg text-xs outline-none">
+                            <option value="color">Color Sólido</option>
+                            <option value="gradient">Gradiente</option>
+                            <option value="image">Imagen</option>
+                        </select>
+                    </div>
+
+                    <div id="bg-color-section" class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                        <label class="text-[11px] font-bold text-gray-500 block mb-2">Color de Fondo</label>
+                        <div class="flex items-center gap-3">
+                            <input type="color" id="input-bg-color" value="#f9fafb" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent">
+                            <span id="bg-color-hex" class="text-xs font-mono text-gray-500">#F9FAFB</span>
+                        </div>
+                    </div>
+
+                    <div id="bg-gradient-section" class="space-y-3 hidden">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                <label class="text-[11px] font-bold text-gray-500 block mb-2">Color Inicio</label>
+                                <input type="color" id="gradient-start" value="#003366" class="w-full h-10 border-0 rounded-lg cursor-pointer">
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                <label class="text-[11px] font-bold text-gray-500 block mb-2">Color Final</label>
+                                <input type="color" id="gradient-end" value="#FFB800" class="w-full h-10 border-0 rounded-lg cursor-pointer">
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                            <label class="text-[11px] font-bold text-gray-500 block mb-2">Dirección del Gradiente</label>
+                            <select id="gradient-direction" class="w-full p-2 bg-white border rounded-lg text-xs outline-none">
+                                <option value="to right">→ Horizontal (Izquierda a Derecha)</option>
+                                <option value="to left">← Horizontal (Derecha a Izquierda)</option>
+                                <option value="to bottom">↓ Vertical (Arriba a Abajo)</option>
+                                <option value="to top">↑ Vertical (Abajo a Arriba)</option>
+                                <option value="to bottom right">↘ Diagonal</option>
+                                <option value="to top right">↗ Diagonal Inversa</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="bg-image-section" class="hidden">
+                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                            <label class="text-[11px] font-bold text-gray-500 block mb-2">Subir Imagen de Fondo</label>
+                            <input type="file" id="input-bg-image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#003366] file:text-white hover:file:bg-blue-950 cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2 border-t border-gray-100">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">3. Botones de Acción</h4>
+
+                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-green-600 font-mono">🟢 WHATSAPP</span>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="show-wa" checked class="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500">
+                                <span class="text-xs text-gray-500">Mostrar</span>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="btn-wa-text" value="Reserva tu Cita por WhatsApp" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                            <input type="text" id="btn-wa-link" value="https://wa.me/50760000000" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-pink-600 font-mono">📸 INSTAGRAM</span>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="show-ig" checked class="w-4 h-4 rounded border-gray-300 text-pink-500 focus:ring-pink-500">
+                                <span class="text-xs text-gray-500">Mostrar</span>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="btn-ig-text" value="Síguenos en Instagram" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                            <input type="text" id="btn-ig-link" value="https://instagram.com/tallercentralpty" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-blue-600 font-mono">📘 FACEBOOK</span>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="show-fb" class="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500">
+                                <span class="text-xs text-gray-500">Mostrar</span>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="btn-fb-text" value="Síguenos en Facebook" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                            <input type="text" id="btn-fb-link" value="https://facebook.com/tallercentralpty" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-red-600 font-mono">🎳 YOUTUBE</span>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="show-yt" class="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500">
+                                <span class="text-xs text-gray-500">Mostrar</span>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="btn-yt-text" value="Ver nuestro Canal" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                            <input type="text" id="btn-yt-link" value="https://youtube.com/@tallercentralpty" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-gray-700 font-mono">🌐 SITIO WEB</span>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="show-web" class="w-4 h-4 rounded border-gray-300 text-gray-500 focus:ring-gray-500">
+                                <span class="text-xs text-gray-500">Mostrar</span>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="btn-web-text" value="Visitar nuestro Sitio Web" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                            <input type="text" id="btn-web-link" value="https://tallercentralpty.com" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-purple-600 font-mono">📞 TELÉFONO</span>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="show-phone" class="w-4 h-4 rounded border-gray-300 text-purple-500 focus:ring-purple-500">
+                                <span class="text-xs text-gray-500">Mostrar</span>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="btn-phone-text" value="Llamar Ahora" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                            <input type="text" id="btn-phone-link" value="tel:+50760000000" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="alert('¡Mini-sitio guardado y publicado!')" class="w-full bg-[#FFB800] text-[#003366] py-3 rounded-xl font-bold hover:shadow-lg transition">Publicar Cambios en Vivo</button>
+            </div>
+
+            <div class="flex flex-col items-center justify-center bg-gray-800 p-6 rounded-3xl shadow-inner relative overflow-hidden">
+                <span class="absolute top-3 text-[10px] tracking-widest text-gray-500 font-bold uppercase">Vista Previa del Pasajero</span>
+
+                <div class="w-72 bg-white rounded-[36px] shadow-2xl border-[8px] border-gray-950 overflow-hidden flex flex-col h-[520px] mt-4">
+
+                    <div id="preview-screen" class="bg-gray-50 flex-grow px-4 pt-8 text-center flex flex-col justify-between pb-6 transition-all duration-200">
+                        <div class="space-y-4 z-10">
+
+                            <div id="preview-logo-container" class="w-16 h-16 bg-[#003366] text-white font-bold rounded-full flex items-center justify-center text-xl mx-auto shadow-md overflow-hidden">
+                                <span id="preview-logo-placeholder">T</span>
+                                <img id="preview-logo-img" class="w-full h-full object-cover hidden" src="" alt="Logo">
+                            </div>
+
+                            <div>
+                                <h4 id="preview-title" class="font-bold text-gray-800 text-base leading-tight">Taller Automotriz Central</h4>
+                                <p id="preview-desc" class="text-[11px] text-gray-500 mt-1 px-2 leading-relaxed">Mantenimiento preventivo, frenos, suspensión y diagnóstico por computadora en Ciudad de Panamá.</p>
+                            </div>
+
+                            <div class="space-y-2.5 pt-4">
+                                <a id="preview-wa" href="#" class="block w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);">Reserva tu Cita por WhatsApp</a>
+                                <a id="preview-ig" href="#" class="block w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="background: linear-gradient(115deg, rgb(249, 206, 52), rgb(238, 42, 123), rgb(98, 40, 215)); --contrast-color: #ffdcff;">Síguenos en Instagram</a>
+                                <a id="preview-fb" href="#" class="hidden w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="background: #5890FF;">Síguenos en Facebook</a>
+                                <a id="preview-yt" href="#" class="hidden w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);">Ver nuestro Canal</a>
+                                <a id="preview-web" href="#" class="hidden w-full bg-gray-800 text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm">Visitar nuestro Sitio Web</a>
+                                <a id="preview-phone" href="#" class="hidden w-full bg-purple-600 text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm">Llamar Ahora</a>
+                            </div>
+                        </div>
+
+                        <div class="text-[9px] text-gray-400 z-10">⚡ Potenciado por <span class="font-bold text-[#003366]">pubtaxi.lat</span></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/builder.js"></script>
+<script src="js/mobile.js"></script>
+<script>
+    setActiveNav('builder.html');
+</script>
+</body>
+</html>

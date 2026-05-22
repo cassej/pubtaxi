@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs de Transiciones | pubtaxi.lat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; } h1, h2, h3 { font-family: 'Montserrat', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+<div class="flex min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm z-50 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-[#FFB800] rounded-md flex items-center justify-center font-bold text-[#003366]">P</div>
+            <span class="text-base font-bold text-[#003366]">pubtaxi<span class="text-[#FFB800]">.lat</span></span>
+        </div>
+        <button id="menu-toggle" class="p-2 rounded-lg hover:bg-gray-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-sm transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-[#FFB800] rounded-md flex items-center justify-center font-bold text-[#003366]">P</div>
+                <span class="text-lg font-bold text-[#003366]">pubtaxi<span class="text-[#FFB800]">.lat</span></span>
+            </div>
+            <button id="menu-close" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="p-4 space-y-1">
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                📊 <span>Analítica</span>
+            </a>
+            <a href="redirects.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                🚕 <span>Mis Anuncios</span>
+            </a>
+            <a href="builder.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                📱 <span>Mini-Sitio</span>
+            </a>
+            <a href="logs.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium bg-[#003366]/10 text-[#003366] border-l-4 border-[#003366]">
+                📋 <span>Logs</span>
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 px-4 py-2">
+                <div class="w-8 h-8 bg-[#003366] rounded-full flex items-center justify-center text-white text-sm font-bold">T</div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">Taller Central</p>
+                    <p class="text-xs text-gray-500">Plan Pro</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+
+    <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
+        <h1 class="text-xl lg:text-2xl font-bold text-[#003366] mb-6">📋 Logs de Transiciones</h1>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+            <div class="p-4 lg:p-6 bg-gray-50 border-b border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 class="font-bold text-gray-800">Filtros</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <select class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs outline-none">
+                            <option>Todos los vehículos</option>
+                            <option>TAXI-01 (Toyota)</option>
+                            <option>TAXI-02 (Kia)</option>
+                        </select>
+                        <select class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs outline-none">
+                            <option>Últimas 24 horas</option>
+                            <option>Últimos 7 días</option>
+                            <option>Últimos 30 días</option>
+                        </select>
+                        <button class="px-4 py-2 bg-[#003366] text-white rounded-lg text-xs font-bold hover:bg-blue-950 transition">Exportar CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase font-bold border-b">
+                            <th class="p-4">Fecha / Hora</th>
+                            <th class="p-4">Vehículo</th>
+                            <th class="p-4">Acción</th>
+                            <th class="p-4">Dispositivo</th>
+                            <th class="p-4">URL Generada</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-gray-100">
+
+                        <tr class="hover:bg-gray-50">
+                            <td class="p-4">
+                                <p class="font-medium text-gray-800">20 May 2026</p>
+                                <p class="text-xs text-gray-500">15:42:11</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="font-bold text-[#003366]">TAXI-01</span>
+                                <p class="text-xs text-gray-500">Toyota Corolla</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">Mini-Sitio</span>
+                            </td>
+                            <td class="p-4">
+                                <p class="text-xs text-gray-600">📱 iPhone</p>
+                                <p class="text-[10px] text-gray-400">Safari (iOS 17.4)</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] text-blue-900 block max-w-[200px] truncate">/site/taller-central</span>
+                            </td>
+                        </tr>
+
+                        <tr class="hover:bg-gray-50">
+                            <td class="p-4">
+                                <p class="font-medium text-gray-800">20 May 2026</p>
+                                <p class="text-xs text-gray-500">15:38:04</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="font-bold text-[#003366]">TAXI-02</span>
+                                <p class="text-xs text-gray-500">Kia Picanto</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">Redirección</span>
+                            </td>
+                            <td class="p-4">
+                                <p class="text-xs text-gray-600">🤖 Android</p>
+                                <p class="text-[10px] text-gray-400">Chrome (Android 14)</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] text-blue-900 block max-w-[200px] truncate">wa.me/50760000000</span>
+                            </td>
+                        </tr>
+
+                        <tr class="hover:bg-gray-50">
+                            <td class="p-4">
+                                <p class="font-medium text-gray-800">20 May 2026</p>
+                                <p class="text-xs text-gray-500">14:15:55</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="font-bold text-[#003366]">TAXI-01</span>
+                                <p class="text-xs text-gray-500">Toyota Corolla</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">Mini-Sitio</span>
+                            </td>
+                            <td class="p-4">
+                                <p class="text-xs text-gray-600">📱 iPhone</p>
+                                <p class="text-[10px] text-gray-400">Chrome (iOS)</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] text-blue-900 block max-w-[200px] truncate">/site/taller-central</span>
+                            </td>
+                        </tr>
+
+                        <tr class="hover:bg-gray-50">
+                            <td class="p-4">
+                                <p class="font-medium text-gray-800">20 May 2026</p>
+                                <p class="text-xs text-gray-500">12:30:22</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="font-bold text-[#003366]">TAXI-02</span>
+                                <p class="text-xs text-gray-500">Kia Picanto</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">Mini-Sitio</span>
+                            </td>
+                            <td class="p-4">
+                                <p class="text-xs text-gray-600">📱 iPhone</p>
+                                <p class="text-[10px] text-gray-400">Safari (iOS 17.5)</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] text-blue-900 block max-w-[200px] truncate">/site/taller-central</span>
+                            </td>
+                        </tr>
+
+                        <tr class="hover:bg-gray-50">
+                            <td class="p-4">
+                                <p class="font-medium text-gray-800">20 May 2026</p>
+                                <p class="text-xs text-gray-500">10:15:33</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="font-bold text-[#003366]">TAXI-01</span>
+                                <p class="text-xs text-gray-500">Toyota Corolla</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">Redirección</span>
+                            </td>
+                            <td class="p-4">
+                                <p class="text-xs text-gray-600">💻 Desktop</p>
+                                <p class="text-[10px] text-gray-400">Firefox (Windows)</p>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-gray-100 px-2 py-1 rounded font-mono text-[10px] text-blue-900 block max-w-[200px] truncate">tallercentralpty.com</span>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <p class="text-xs text-gray-500">Mostrando 5 de 1,248 registros</p>
+                <div class="flex gap-2">
+                    <button class="px-3 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-50">Anterior</button>
+                    <button class="px-3 py-1 bg-[#003366] text-white rounded text-xs hover:bg-blue-950">Siguiente</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/mobile.js"></script>
+<script>
+    setActiveNav('logs.html');
+</script>
+</body>
+</html>

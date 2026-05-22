@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Vehículos | pubtaxi.lat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; } h1, h2, h3 { font-family: 'Montserrat', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+<div class="flex min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm z-50 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-[#FFB800] rounded-md flex items-center justify-center font-bold text-[#003366]">P</div>
+            <span class="text-base font-bold text-[#003366]">pubtaxi<span class="text-[#FFB800]">.lat</span></span>
+        </div>
+        <button id="menu-toggle" class="p-2 rounded-lg hover:bg-gray-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-sm transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-[#FFB800] rounded-md flex items-center justify-center font-bold text-[#003366]">P</div>
+                <span class="text-lg font-bold text-[#003366]">pubtaxi<span class="text-[#FFB800]">.lat</span></span>
+            </div>
+            <button id="menu-close" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="p-4 space-y-1">
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                💰 <span>Ganancias</span>
+            </a>
+            <a href="vehicles.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium bg-[#003366]/10 text-[#003366] border-l-4 border-[#003366]">
+                🚕 <span>Mis Vehículos</span>
+            </a>
+            <a href="payouts.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                📄 <span>Historial de Pagos</span>
+            </a>
+            <a href="logs.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                📋 <span>Logs</span>
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 px-4 py-2">
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">J</div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">Juan Pérez</p>
+                    <p class="text-xs text-gray-500">Taxista</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+
+    <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl lg:text-2xl font-bold text-[#003366]">🚕 Mis Vehículos</h1>
+            <button onclick="alert('Agregar vehículo')" class="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-950 transition">+ Agregar Vehículo</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-4">
+                        <span class="text-4xl">🚗</span>
+                        <div>
+                            <h3 class="font-bold text-gray-800">TOYOTA-01</h3>
+                            <p class="text-sm text-gray-500">Toyota Corolla</p>
+                        </div>
+                    </div>
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">ACTIVO</span>
+                </div>
+
+                <div class="space-y-3 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Placa:</span>
+                        <span class="font-medium">RI-4829</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Color:</span>
+                        <span class="font-medium">Blanco</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Campaña:</span>
+                        <span class="font-medium">Taller Central</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-[#003366]">78</p>
+                        <p class="text-xs text-gray-400">Escaneos mes</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-green-600">$195</p>
+                        <p class="text-xs text-gray-400">Ganado mes</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-4">
+                        <span class="text-4xl">🚙</span>
+                        <div>
+                            <h3 class="font-bold text-gray-800">KIA-02</h3>
+                            <p class="text-sm text-gray-500">Kia Picanto</p>
+                        </div>
+                    </div>
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">ACTIVO</span>
+                </div>
+
+                <div class="space-y-3 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Placa:</span>
+                        <span class="font-medium">AA-9023</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Color:</span>
+                        <span class="font-medium">Amarillo</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">Campaña:</span>
+                        <span class="font-medium">Taller Central</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-[#003366]">50</p>
+                        <p class="text-xs text-gray-400">Escaneos mes</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-green-600">$147</p>
+                        <p class="text-xs text-gray-400">Ganado mes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+<script src="../advertiser/js/common.js"></script>
+<script src="../advertiser/js/mobile.js"></script>
+</body>
+</html>
