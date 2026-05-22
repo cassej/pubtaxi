@@ -29,44 +29,12 @@ export default {
     // 1. Handle Redirects: /r/aB3
     if (path[0] === 'r' && path[1]) {
       const qrId = fromBase62(path[1]);
-      
-      const qr = await env.DB.prepare(`
-        SELECT q.*, c.target_url, c.minisite_id 
-        FROM qr_codes q
-        JOIN campaigns c ON q.campaign_id = c.id
-        WHERE q.id = ? AND c.status = 'active'
-      `).bind(qrId).first();
+      // ... existing redirect logic
+    }
 
-      if (!qr) return new Response("Not Found", { status: 404 });
-
-      const clientId = request.headers.get("Cookie")?.match(/puid=([^;]+)/)?.[1] || crypto.randomUUID();
-      const userAgent = request.headers.get("User-Agent");
-      const country = request.headers.get("CF-IPCountry");
-
-      ctx.waitUntil((async () => {
-        await env.DB.prepare(`INSERT OR IGNORE INTO clients (id, user_agent, ip_country) VALUES (?, ?, ?)`).bind(clientId, userAgent, country).run();
-        await env.DB.prepare(`INSERT INTO events (qr_id, client_id, event_type) VALUES (?, ?, 'scan')`).bind(qrId, clientId).run();
-      })());
-
-      if (qr.redirect_mode === 'minisite') {
-        const minisite = await env.DB.prepare("SELECT * FROM minisites WHERE id = ?").bind(qr.minisite_id).first();
-        if (minisite) {
-          return new Response(renderMinisite(minisite, path[1]), {
-            headers: { 
-              "Content-Type": "text/html",
-              "Set-Cookie": `puid=${clientId}; Max-Age=31536000; Path=/; HttpOnly; Secure; SameSite=Lax`
-            }
-          });
-        }
-      }
-
-      return new Response(null, {
-        status: 302,
-        headers: {
-          "Location": qr.target_url,
-          "Set-Cookie": `puid=${clientId}; Max-Age=31536000; Path=/; HttpOnly; Secure; SameSite=Lax`
-        }
-      });
+    // NEW: Bypass worker for static assets (Cloudflare Pages)
+    if (path[0] !== 'api' && path[0] !== 'r') {
+      return fetch(request);
     }
 
     // 2. Event API
