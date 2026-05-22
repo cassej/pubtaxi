@@ -12,8 +12,7 @@ function toBase62(num) {
   }
   return result;
 }
-
-function fromBase62(str) {
+export function fromBase62(str) {
   let num = 0;
   for (let i = 0; i < str.length; i++) {
     num = num * 62 + BASE62_CHARS.indexOf(str[i]);
@@ -22,6 +21,7 @@ function fromBase62(str) {
 }
 
 export default {
+...
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.split('/').filter(Boolean);
