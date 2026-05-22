@@ -5,11 +5,10 @@ compatibility_flags = ["nodejs_compat"]
 
 observability = { enabled = true, head_sampling_rate = 1 }
 
-# D1 Database binding
 [[d1_databases]]
 binding = "DB"
 database_name = "pubtaxi"
-database_id = "YOUR_D1_DATABASE_ID" # Replace with actual ID from `wrangler d1 list`
+database_id = "830827ae-6938-480e-a254-1697651765c9"
 
 # Secrets (set via: wrangler secret put <SECRET_NAME>)
 # JWT_SECRET - Your secret key for JWT signing
