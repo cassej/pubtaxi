@@ -96,19 +96,69 @@ export default {
       });
     }
 
-    // 2. JSON-RPC API endpoint
+    // 2. Clean URL redirects for static pages
+    if (path[0] === 'auth' && request.method === 'GET') {
+      return new Response(null, {
+        status: 302,
+        headers: { "Location": "/auth.html" }
+      });
+    }
+    if (path[0] === 'admin' && request.method === 'GET') {
+      return new Response(null, {
+        status: 302,
+        headers: { "Location": "/admin/index.html" }
+      });
+    }
+    if (path[0] === 'advertiser' && request.method === 'GET') {
+      return new Response(null, {
+        status: 302,
+        headers: { "Location": "/advertiser/index.html" }
+      });
+    }
+    if (path[0] === 'driver' && request.method === 'GET') {
+      return new Response(null, {
+        status: 302,
+        headers: { "Location": "/driver/index.html" }
+      });
+    }
+
+    // 3. JSON-RPC API endpoint
     if (path[0] === 'rpc' && request.method === 'POST') {
       return handleJsonRpc(request, env, ctx);
     }
 
-    // Legacy API routes (backward compatibility)
-    if (path[0] === 'api') {
+    // Legacy API routes (backward compatibility - converts to JSON-RPC)
+    if (path[0] === 'api' && request.method === 'POST') {
       const action = path[1];
-      if (action === 'event' && request.method === 'POST') return handleJsonRpc(request, env, ctx);
-      if (action === 'login' && request.method === 'POST') return handleJsonRpc(request, env, ctx);
-      if (action === 'generate-qr' && request.method === 'POST') return handleJsonRpc(request, env, ctx);
-      if (action === 'update-campaign' && request.method === 'POST') return handleJsonRpc(request, env, ctx);
-      if (action === 'stats') return handleJsonRpc(request, env, ctx);
+      const methodMap = {
+        'event': 'event.track',
+        'login': 'auth.login',
+        'generate-qr': 'qr.generate',
+        'update-campaign': 'campaign.update',
+        'stats': 'stats.get'
+      };
+      const method = methodMap[action];
+      if (method) {
+        console.log(JSON.stringify({ event: "legacy_api_convert", action, method }));
+        // Convert legacy request to JSON-RPC
+        const body = await request.json().catch((e) => {
+          console.log(JSON.stringify({ event: "legacy_parse_error", error: String(e) }));
+          return {};
+        });
+        const rpcBody = {
+          jsonrpc: "2.0",
+          method: method,
+          params: body,
+          id: 1
+        };
+        console.log(JSON.stringify({ event: "legacy_converted", rpcBody }));
+        const newRequest = new Request(request.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rpcBody)
+        });
+        return handleJsonRpc(newRequest, env, ctx);
+      }
     }
 
     // FALLBACK: Serve static content from Pages

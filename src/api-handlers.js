@@ -133,14 +133,19 @@ const METHODS = {
 };
 
 export async function handleJsonRpc(request, env, context) {
+  console.log(JSON.stringify({ event: "rpc_request", url: request.url, method: request.method }));
+
   if (request.headers.get("content-type") !== "application/json") {
+    console.log(JSON.stringify({ event: "rpc_content_type_error", contentType: request.headers.get("content-type") }));
     return jsonRpcError(ERROR_CODES.INVALID_REQUEST, "Content-Type must be application/json");
   }
 
   let rpcRequest;
   try {
     rpcRequest = await request.json();
+    console.log(JSON.stringify({ event: "rpc_request_body", body: rpcRequest }));
   } catch (err) {
+    console.log(JSON.stringify({ event: "rpc_parse_error", error: String(err) }));
     return jsonRpcError(ERROR_CODES.PARSE_ERROR, "Parse error");
   }
 
@@ -170,9 +175,10 @@ export async function handleJsonRpc(request, env, context) {
     try {
       context.request = request; // Pass request for header access
       const result = await method(req.params || {}, env, context);
+      console.log(JSON.stringify({ event: "rpc_success", method: req.method, result }));
       responses.push({ jsonrpc: "2.0", result, id: req.id });
     } catch (err) {
-      console.log(JSON.stringify({ event: "rpc_error", method: req.method, error: String(err) }));
+      console.log(JSON.stringify({ event: "rpc_error", method: req.method, error: String(err), stack: err.stack }));
       responses.push({
         jsonrpc: "2.0",
         error: {
@@ -184,13 +190,16 @@ export async function handleJsonRpc(request, env, context) {
     }
   }
 
+  const response = isArray ? responses : responses[0];
+  console.log(JSON.stringify({ event: "rpc_response", response }));
+
   if (isArray) {
     return new Response(JSON.stringify(responses), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
     });
   }
 
-  return new Response(JSON.stringify(responses[0]), {
+  return new Response(JSON.stringify(response), {
     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
   });
 }
