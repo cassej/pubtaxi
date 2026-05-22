@@ -1,0 +1,4 @@
+# Exclude server-side files from assets
+_worker.js
+src/
+functions/

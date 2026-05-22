@@ -4,6 +4,9 @@ import { toBase62, fromBase62 } from './src/utils.js';
 
 export default {
   fetch: async (request, env, ctx) => {
+    // Clone URL before potential modification
+    const url = new URL(request.url);
+    const path = url.pathname.split('/').filter(Boolean);
     const url = new URL(request.url);
     const path = url.pathname.split('/').filter(Boolean);
 
@@ -100,9 +103,10 @@ export default {
       }
     }
 
-    // 4. Everything else - let Pages serve static files
-    // Don't return anything -> Pages Assets will handle it
-    console.log(JSON.stringify({ event: "pass_to_pages", url: url.pathname }));
-    return undefined;
+    // 4. Everything else - serve from Pages Assets
+    console.log(JSON.stringify({ event: "fetch_asset", url: url.pathname }));
+
+    // Use ASSETS binding for static files
+    return env.ASSETS.fetch(request);
   }
 };
