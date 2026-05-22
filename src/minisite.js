@@ -84,7 +84,7 @@ export function renderMinisite(data, qrId) {
 
     <script>
         async function trackClick(qrId, btnId) {
-            await fetch('/api/event', {
+            await fetch('/rpc', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

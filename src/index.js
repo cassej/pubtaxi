@@ -26,43 +26,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.split('/').filter(Boolean);
 
-    // Static files - let Pages handle them
-    if (request.method === 'GET' && !path[0]) {
-      return new Response(null, {
-        status: 200,
-        headers: { "x-skip-worker": "true" }
-      });
-    }
-
-    // Serve static assets (css, js, images, etc)
-    if (request.method === 'GET' && (
-      path[0]?.endsWith('.html') ||
-      path[0]?.endsWith('.css') ||
-      path[0]?.endsWith('.js') ||
-      path[0]?.endsWith('.png') ||
-      path[0]?.endsWith('.jpg') ||
-      path[0]?.endsWith('.svg') ||
-      path[0]?.endsWith('.ico')
-    )) {
-      return new Response(null, {
-        status: 200,
-        headers: { "x-skip-worker": "true" }
-      });
-    }
-
-    // Serve files from subdirectories
-    if (request.method === 'GET' && (
-      path[0] === 'admin' ||
-      path[0] === 'advertiser' ||
-      path[0] === 'driver' ||
-      path[0] === 'img' ||
-      path[0] === 'js'
-    )) {
-      return new Response(null, {
-        status: 200,
-        headers: { "x-skip-worker": "true" }
-      });
-    }
+    console.log(JSON.stringify({ event: "request", path, method: request.method }));
 
     // 1. Handle Redirects: /r/aB3
     if (path[0] === 'r' && path[1]) {
@@ -117,7 +81,7 @@ export default {
         const minisite = await env.DB.prepare("SELECT * FROM minisites WHERE id = ?").bind(qr.minisite_id).first();
         if (minisite) {
           return new Response(renderMinisite(minisite, path[1]), {
-            headers: { 
+            headers: {
               "Content-Type": "text/html",
               "Set-Cookie": `puid=${clientId}; Max-Age=31536000; Path=/; HttpOnly; Secure; SameSite=Lax`
             }
@@ -134,76 +98,29 @@ export default {
       });
     }
 
-    // 2. Clean URL redirects for static pages
-    if (path[0] === 'auth' && request.method === 'GET') {
-      return new Response(null, {
-        status: 302,
-        headers: { "Location": "/auth.html" }
-      });
-    }
-    if (path[0] === 'admin' && request.method === 'GET') {
-      return new Response(null, {
-        status: 302,
-        headers: { "Location": "/admin/index.html" }
-      });
-    }
-    if (path[0] === 'advertiser' && request.method === 'GET') {
-      return new Response(null, {
-        status: 302,
-        headers: { "Location": "/advertiser/index.html" }
-      });
-    }
-    if (path[0] === 'driver' && request.method === 'GET') {
-      return new Response(null, {
-        status: 302,
-        headers: { "Location": "/driver/index.html" }
-      });
-    }
-
-    // 3. JSON-RPC API endpoint
+    // 2. JSON-RPC API endpoint
     if (path[0] === 'rpc' && request.method === 'POST') {
       return handleJsonRpc(request, env, ctx);
     }
 
-    // Legacy API routes (backward compatibility - converts to JSON-RPC)
-    if (path[0] === 'api' && request.method === 'POST') {
-      const action = path[1];
-      const methodMap = {
-        'event': 'event.track',
-        'login': 'auth.login',
-        'generate-qr': 'qr.generate',
-        'update-campaign': 'campaign.update',
-        'stats': 'stats.get'
-      };
-      const method = methodMap[action];
-      if (method) {
-        console.log(JSON.stringify({ event: "legacy_api_convert", action, method }));
-        // Convert legacy request to JSON-RPC
-        const body = await request.json().catch((e) => {
-          console.log(JSON.stringify({ event: "legacy_parse_error", error: String(e) }));
-          return {};
-        });
-        const rpcBody = {
-          jsonrpc: "2.0",
-          method: method,
-          params: body,
-          id: 1
-        };
-        console.log(JSON.stringify({ event: "legacy_converted", rpcBody }));
-        const newRequest = new Request(request.url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(rpcBody)
-        });
-        return handleJsonRpc(newRequest, env, ctx);
+    // 3. Clean URL redirects for static pages
+    if (request.method === 'GET') {
+      if (path[0] === 'auth') {
+        return new Response(null, { status: 302, headers: { "Location": "/auth.html" } });
+      }
+      if (path[0] === 'admin' && !path[1]) {
+        return new Response(null, { status: 302, headers: { "Location": "/admin/index.html" } });
+      }
+      if (path[0] === 'advertiser' && !path[1]) {
+        return new Response(null, { status: 302, headers: { "Location": "/advertiser/index.html" } });
+      }
+      if (path[0] === 'driver' && !path[1]) {
+        return new Response(null, { status: 302, headers: { "Location": "/driver/index.html" } });
       }
     }
 
-    // FALLBACK: Serve static content from Pages
-    // Return 200 with x-skip-worker header to let Pages handle static files
-    return new Response(null, {
-      status: 200,
-      headers: { "x-skip-worker": "true" }
-    });
+    // 4. Everything else - fetch from Pages (static files)
+    console.log(JSON.stringify({ event: "fetch_static", url: url.pathname }));
+    return fetch(request);
   }
 };

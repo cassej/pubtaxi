@@ -1,6 +1,6 @@
 async function initCharts() {
     try {
-        const response = await fetch('/api/stats', {
+        const response = await fetch('/rpc', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

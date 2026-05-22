@@ -12,7 +12,7 @@ document.querySelectorAll('.bg-white.rounded-2xl.shadow-sm.border.border-gray-10
         saveBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/update-campaign', {
+            const response = await fetch('/rpc', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

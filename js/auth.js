@@ -4,8 +4,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const password = this.querySelector('input[type="password"]').value;
 
     try {
-        // JSON-RPC request
-        const response = await fetch('/api/login', {
+        // JSON-RPC request to /rpc endpoint
+        const response = await fetch('/rpc', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
