@@ -2,6 +2,20 @@ import { renderMinisite } from './src/minisite.js';
 import { handleJsonRpc } from './src/api-handlers.js';
 import { toBase62, fromBase62 } from './src/utils.js';
 
+function stubPage(campaignName) {
+  return `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>pubtaxi.lat</title>
+<script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<div class="text-center p-8 max-w-sm">
+  <div class="w-16 h-16 bg-[#FFB800] rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6">🚕</div>
+  <h1 class="text-xl font-bold text-[#003366] mb-3">Campaña no activa</h1>
+  <p class="text-sm text-gray-500 mb-2">${campaignName ? `La campaña <strong>${campaignName}</strong> no está activa en este momento.` : 'Esta campaña no está activa en este momento.'}</p>
+  <p class="text-xs text-gray-400">Escanea otro código QR en tu taxi.</p>
+  <div class="mt-8 text-[10px] text-gray-300">⚡ pubtaxi.lat</div>
+</div></body></html>`;
+
 export default {
   fetch: async (request, env, ctx) => {
     const url = new URL(request.url);
@@ -20,10 +34,10 @@ export default {
       }));
 
       const qr = await env.DB.prepare(`
-        SELECT q.*, c.target_url, c.minisite_id
+        SELECT q.*, c.target_url, c.minisite_id, c.status as campaign_status, c.name as campaign_name
         FROM qr_codes q
         JOIN campaigns c ON q.campaign_id = c.id
-        WHERE q.id = ? AND c.status = 'active'
+        WHERE q.id = ?
       `).bind(qrId).first();
 
       if (!qr) {
@@ -33,6 +47,13 @@ export default {
           timestamp: Date.now()
         }));
         return new Response("Not Found", { status: 404 });
+      }
+
+      if (qr.campaign_status !== 'active') {
+        return new Response(stubPage(qr.campaign_name), {
+          status: 200,
+          headers: { "Content-Type": "text/html" }
+        });
       }
 
       const clientId = request.headers.get("Cookie")?.match(/puid=([^;]+)/)?.[1] || crypto.randomUUID();

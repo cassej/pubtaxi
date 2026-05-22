@@ -88,6 +88,13 @@
                 </thead>
                 <tbody id="payouts-tbody" class="text-sm divide-y divide-gray-100"></tbody>
             </table>
+            <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <p class="text-xs text-gray-500" id="payouts-count">Cargando...</p>
+                <div class="flex gap-2">
+                    <button id="btn-prev" onclick="pagePrev()" class="px-3 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-50 disabled:opacity-30" disabled>Anterior</button>
+                    <button id="btn-next" onclick="pageNext()" class="px-3 py-1 bg-[#003366] text-white rounded text-xs hover:bg-blue-950 disabled:opacity-30" disabled>Siguiente</button>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -117,10 +124,17 @@
 <script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
 <script>
+let payoutOffset = 0;
+const PAYOUT_LIMIT = 20;
+
 async function loadPayouts() {
     try {
-        const data = await api('admin.payouts.list');
+        const data = await api('admin.payouts.list', { offset: payoutOffset, limit: PAYOUT_LIMIT });
         const tbody = document.getElementById('payouts-tbody');
+        document.getElementById('payouts-count').textContent = `Mostrando ${Math.min(data.total, PAYOUT_LIMIT)} de ${data.total} registros`;
+        document.getElementById('btn-prev').disabled = payoutOffset === 0;
+        document.getElementById('btn-next').disabled = payoutOffset + PAYOUT_LIMIT >= data.total;
+
         if (!data.payouts || data.payouts.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-400">No hay pagos registrados</td></tr>';
             return;
@@ -136,7 +150,7 @@ async function loadPayouts() {
             </tr>
         `).join('');
     } catch (err) {
-        console.error('Error loading payouts:', err);
+        toast(err.message, 'error');
     }
 }
 
@@ -149,7 +163,7 @@ async function showCreateModal() {
                 `<option value="${u.id}">${u.name || u.email}</option>`
             ).join('');
     } catch (err) {
-        console.error(err);
+        toast(err.message, 'error');
     }
     document.getElementById('create-modal').classList.remove('hidden');
 }
@@ -174,6 +188,7 @@ document.getElementById('create-form').addEventListener('submit', async function
         closeCreateModal();
         this.reset();
         loadPayouts();
+        toast('Pago creado', 'success');
     } catch (err) {
         toast(err.message, 'error');
     } finally {
@@ -181,6 +196,9 @@ document.getElementById('create-form').addEventListener('submit', async function
         btn.textContent = 'Crear';
     }
 });
+
+function pagePrev() { if (payoutOffset > 0) { payoutOffset -= PAYOUT_LIMIT; loadPayouts(); } }
+function pageNext() { payoutOffset += PAYOUT_LIMIT; loadPayouts(); }
 
 loadPayouts();
 </script>

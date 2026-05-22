@@ -124,7 +124,7 @@ async function loadPayouts() {
             </tr>
         `).join('');
     } catch (err) {
-        console.error('Error loading payouts:', err);
+        toast(err.message, 'error');
     }
 }
 loadPayouts();

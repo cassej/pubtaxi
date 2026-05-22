@@ -159,10 +159,12 @@
 <script src="../js/ui.js"></script>
 <script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 let allCampaigns = [];
 let advertisers = [];
 let qrCampaignId = null;
+let qrCampaignName = '';
 
 async function load() {
     await Promise.all([loadCampaigns(), loadAdvertisers()]);
@@ -263,7 +265,8 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
 async function showQrModal(campaignId) {
     qrCampaignId = campaignId;
     const c = allCampaigns.find(x => x.id === campaignId);
-    document.getElementById('qr-modal-title').textContent = `QR — ${c ? c.name : ''}`;
+    qrCampaignName = c ? c.name : '';
+    document.getElementById('qr-modal-title').textContent = `QR — ${qrCampaignName}`;
     document.getElementById('qr-result').classList.add('hidden');
 
     await Promise.all([loadQrCodes(campaignId), loadQrVehicles()]);
@@ -279,17 +282,24 @@ async function loadQrCodes(campaignId) {
             container.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">No hay códigos QR asignados todavía</p>';
             return;
         }
-        container.innerHTML = codes.map(q => `
+        container.innerHTML = codes.map(q => {
+            const sid = toBase62(q.id);
+            const plate = q.plate_number || '#' + q.vehicle_id;
+            const pos = q.position || '';
+            return `
             <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl text-sm">
                 <div class="flex items-center gap-3 min-w-0">
                     <span class="font-bold text-[#003366]">${q.plate_number || '#' + q.vehicle_id}</span>
                     <span class="text-gray-500">${q.model || ''}</span>
                     <span class="text-gray-400 text-xs">${q.position || '—'}</span>
-                    <span class="text-[10px] font-mono bg-gray-200 px-2 py-0.5 rounded">${toBase62(q.id)}</span>
+                    <span class="text-[10px] font-mono bg-gray-200 px-2 py-0.5 rounded">${sid}</span>
                 </div>
-                <span class="text-xs text-gray-400">${new Date(q.created_at).toLocaleDateString('es-PA')}</span>
-            </div>
-        `).join('');
+                <div class="flex items-center gap-3">
+                    <button onclick="downloadSticker(this)" data-sid="${sid}" data-plate="${plate.replace(/"/g, '&quot;')}" data-pos="${pos.replace(/"/g, '&quot;')}" class="text-[#003366] hover:underline text-xs font-medium">Descargar</button>
+                    <span class="text-xs text-gray-400">${new Date(q.created_at).toLocaleDateString('es-PA')}</span>
+                </div>
+            </div>`;
+        }).join('');
     } catch (err) { toast(err.message, 'error'); }
 }
 
@@ -302,6 +312,55 @@ function toBase62(n) {
         n = Math.floor(n / 62);
     }
     return result;
+}
+
+async function downloadSticker(btn) {
+    const shortId = btn.dataset.sid;
+    const plate = btn.dataset.plate;
+    const position = btn.dataset.pos;
+    const url = `https://pubtaxi.lat/r/${shortId}`;
+    const name = qrCampaignName || 'Campaña';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 500;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 400, 500);
+
+    const tempDiv = document.createElement('div');
+    new QRCode(tempDiv, { text: url, width: 280, height: 280, colorDark: '#003366' });
+    const qrCanvas = tempDiv.querySelector('canvas');
+    ctx.drawImage(qrCanvas, 60, 15, 280, 280);
+
+    ctx.fillStyle = '#003366';
+    ctx.font = 'bold 15px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(url, 200, 325);
+
+    ctx.fillStyle = '#333333';
+    ctx.font = '12px "Poppins", sans-serif';
+    ctx.fillText(name, 200, 355);
+
+    ctx.fillStyle = '#666666';
+    ctx.font = '11px "Poppins", sans-serif';
+    const line3 = `Taxi: ${plate}` + (position ? ` — ${position}` : '');
+    ctx.fillText(line3, 200, 380);
+
+    ctx.fillStyle = '#999999';
+    ctx.font = '10px "Poppins", sans-serif';
+    ctx.fillText('pubtaxi.lat', 200, 420);
+
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = '#dddddd';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(3, 3, 394, 494);
+
+    const link = document.createElement('a');
+    link.download = `qr-${shortId}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
 }
 
 async function loadQrVehicles() {

@@ -191,7 +191,7 @@ async function loadUsers() {
         renderTab('drivers');
         renderTab('admins');
     } catch (err) {
-        console.error('Error loading users:', err);
+        toast('Error al cargar usuarios: ' + err.message, 'error');
     }
 }
 

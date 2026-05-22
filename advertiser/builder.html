@@ -79,6 +79,14 @@
                     <p class="text-xs text-gray-400 mt-1">Los pasajeros verán esto inmediatamente al escanear tu QR desde el auto.</p>
                 </div>
 
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">0. Vincular a Campaña</h4>
+                    <select id="campaign-select" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                        <option value="">Seleccionar campaña (opcional)</option>
+                    </select>
+                    <p class="text-[10px] text-gray-400">Al guardar, este mini-sitio se vinculará a la campaña seleccionada</p>
+                </div>
+
                 <div class="space-y-3">
                     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">1. Identidad de tu Negocio</h4>
 
@@ -289,6 +297,18 @@
 <script>
     setActiveNav('builder.html');
 
+    let userCampaigns = [];
+
+    async function loadCampaigns() {
+        try {
+            const data = await api('advertiser.campaigns');
+            userCampaigns = data.campaigns || [];
+            const select = document.getElementById('campaign-select');
+            select.innerHTML = '<option value="">Seleccionar campaña (opcional)</option>' +
+                userCampaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        } catch (err) { /* ignore */ }
+    }
+
     async function saveMinisite() {
         const buttons = [];
         const btnConfigs = [
@@ -315,9 +335,11 @@
         };
 
         const title = document.getElementById('input-title').value;
+        const campaignSelect = document.getElementById('campaign-select');
+        const campaignId = campaignSelect.value ? parseInt(campaignSelect.value) : null;
 
         try {
-            await api('advertiser.minisite.save', { title, config });
+            await api('advertiser.minisite.save', { title, config, campaign_id: campaignId });
             toast('¡Mini-sitio guardado y publicado!', 'success');
         } catch (err) {
             toast('Error: ' + err.message, 'error');
@@ -335,12 +357,18 @@
                     document.getElementById('input-bg-color').value = config.bgColor;
                     document.getElementById('bg-color-hex').textContent = config.bgColor.toUpperCase();
                 }
+
+                const linked = userCampaigns.find(c => c.minisite_id === data.minisite.id);
+                if (linked) {
+                    document.getElementById('campaign-select').value = linked.id;
+                }
             }
         } catch (err) {
-            console.error('Error loading minisite:', err);
+            toast('Error al cargar el mini-sitio: ' + err.message, 'error');
         }
     }
-    loadMinisite();
+
+    loadCampaigns().then(loadMinisite);
 </script>
 </body>
 </html>

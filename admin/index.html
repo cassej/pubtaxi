@@ -203,7 +203,7 @@ async function init() {
             recentContainer.innerHTML = '<p class="text-sm text-gray-500 p-3">No hay usuarios recientes</p>';
         }
     } catch (err) {
-        console.error('Error loading dashboard:', err);
+        toast('Error al cargar dashboard: ' + err.message, 'error');
     }
 }
 init();

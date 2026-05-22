@@ -294,14 +294,19 @@ const METHODS = {
 
   'admin.payouts.list': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
+    const offset = Math.max(0, parseInt(params.offset) || 0);
+    const limit = Math.min(100, Math.max(1, parseInt(params.limit) || 20));
+
+    const total = await env.DB.prepare("SELECT COUNT(*) as c FROM payouts").first();
     const payouts = await env.DB.prepare(`
       SELECT p.id, p.publisher_id, p.period_start, p.period_end, p.scans, p.amount, p.status, p.created_at, p.paid_at,
              u.name as publisher_name, u.email as publisher_email
       FROM payouts p
       LEFT JOIN users u ON p.publisher_id = u.id
       ORDER BY p.created_at DESC
-    `).all();
-    return { payouts: payouts.results };
+      LIMIT ? OFFSET ?
+    `).bind(limit, offset).all();
+    return { payouts: payouts.results, total: total ? total.c : 0 };
   },
 
   'admin.payouts.create': async (params, env, context) => {
@@ -405,6 +410,15 @@ const METHODS = {
 
   'driver.logs': async (params, env, context) => {
     const { user } = await authenticate(context.request, env, ['publisher']);
+    const offset = Math.max(0, parseInt(params.offset) || 0);
+    const limit = Math.min(100, Math.max(1, parseInt(params.limit) || 20));
+
+    const total = await env.DB.prepare(`
+      SELECT COUNT(*) as c FROM events e
+      JOIN qr_codes qc ON e.qr_id = qc.id
+      JOIN vehicles v ON qc.vehicle_id = v.id
+      WHERE v.publisher_id = ?
+    `).bind(user.id).first();
 
     const logs = await env.DB.prepare(`
       SELECT e.id, e.created_at, e.event_type,
@@ -417,10 +431,10 @@ const METHODS = {
       LEFT JOIN campaigns c ON qc.campaign_id = c.id
       WHERE v.publisher_id = ?
       ORDER BY e.created_at DESC
-      LIMIT 100
-    `).bind(user.id).all();
+      LIMIT ? OFFSET ?
+    `).bind(user.id, limit, offset).all();
 
-    return { logs: logs.results };
+    return { logs: logs.results, total: total ? total.c : 0 };
   },
 
   'advertiser.stats': async (params, env, context) => {
@@ -496,6 +510,15 @@ const METHODS = {
 
   'advertiser.logs': async (params, env, context) => {
     const { user } = await authenticate(context.request, env, ['advertiser']);
+    const offset = Math.max(0, parseInt(params.offset) || 0);
+    const limit = Math.min(100, Math.max(1, parseInt(params.limit) || 20));
+
+    const total = await env.DB.prepare(`
+      SELECT COUNT(*) as c FROM events e
+      JOIN qr_codes qc ON e.qr_id = qc.id
+      JOIN campaigns c ON qc.campaign_id = c.id
+      WHERE c.advertiser_id = ?
+    `).bind(user.id).first();
 
     const logs = await env.DB.prepare(`
       SELECT e.id, e.created_at, e.event_type,
@@ -508,10 +531,10 @@ const METHODS = {
       JOIN campaigns c ON qc.campaign_id = c.id
       WHERE c.advertiser_id = ?
       ORDER BY e.created_at DESC
-      LIMIT 100
-    `).bind(user.id).all();
+      LIMIT ? OFFSET ?
+    `).bind(user.id, limit, offset).all();
 
-    return { logs: logs.results };
+    return { logs: logs.results, total: total ? total.c : 0 };
   },
 
   'advertiser.minisite.get': async (params, env, context) => {
@@ -526,21 +549,29 @@ const METHODS = {
 
   'advertiser.minisite.save': async (params, env, context) => {
     const { user } = await authenticate(context.request, env, ['advertiser']);
-    const { title, config } = params;
+    const { title, config, campaign_id } = params;
 
     const existing = await env.DB.prepare(
       "SELECT id FROM minisites WHERE advertiser_id = ? LIMIT 1"
     ).bind(user.id).first();
 
+    let minisiteId;
     if (existing) {
       await env.DB.prepare("UPDATE minisites SET title = ?, config = ? WHERE id = ?")
         .bind(title || '', JSON.stringify(config || {}), existing.id).run();
+      minisiteId = existing.id;
     } else {
-      await env.DB.prepare("INSERT INTO minisites (advertiser_id, title, config) VALUES (?, ?, ?)")
+      const result = await env.DB.prepare("INSERT INTO minisites (advertiser_id, title, config) VALUES (?, ?, ?)")
         .bind(user.id, title || '', JSON.stringify(config || {})).run();
+      minisiteId = result.meta.last_row_id;
     }
 
-    return { success: true };
+    if (campaign_id) {
+      await env.DB.prepare("UPDATE campaigns SET minisite_id = ? WHERE id = ? AND advertiser_id = ?")
+        .bind(minisiteId, campaign_id, user.id).run();
+    }
+
+    return { success: true, minisite_id: minisiteId };
   },
 
   'qr.generate': async (params, env, context) => {
@@ -566,7 +597,7 @@ const METHODS = {
       throw new Error("Forbidden");
     }
 
-    await env.DB.prepare("UPDATE campaigns SET target_url = ?, status = 'active' WHERE id = ?")
+    await env.DB.prepare("UPDATE campaigns SET target_url = ? WHERE id = ?")
         .bind(target_url, id).run();
     if (redirect_mode) {
       await env.DB.prepare("UPDATE qr_codes SET redirect_mode = ? WHERE campaign_id = ?")

@@ -169,7 +169,7 @@
                 </div>
             `).join('');
         } catch (err) {
-            console.error('Error loading vehicles:', err);
+            toast('Error al cargar vehículos: ' + err.message, 'error');
         }
     }
 

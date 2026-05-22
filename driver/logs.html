@@ -80,6 +80,13 @@
                 </thead>
                 <tbody id="logs-tbody" class="text-sm divide-y divide-gray-100"></tbody>
             </table>
+            <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <p class="text-xs text-gray-500" id="logs-count">Cargando...</p>
+                <div class="flex gap-2">
+                    <button id="btn-prev" onclick="pagePrev()" class="px-3 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-50 disabled:opacity-30" disabled>Anterior</button>
+                    <button id="btn-next" onclick="pageNext()" class="px-3 py-1 bg-[#003366] text-white rounded text-xs hover:bg-blue-950 disabled:opacity-30" disabled>Siguiente</button>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -91,10 +98,17 @@
 <script src="../js/sidebar.js"></script>
 <script src="../advertiser/js/mobile.js"></script>
 <script>
+let logOffset = 0;
+const LOG_LIMIT = 20;
+
 async function loadLogs() {
     try {
-        const data = await api('driver.logs');
+        const data = await api('driver.logs', { offset: logOffset, limit: LOG_LIMIT });
         const tbody = document.getElementById('logs-tbody');
+        document.getElementById('logs-count').textContent = `Mostrando ${Math.min(data.total, LOG_LIMIT)} de ${data.total} registros`;
+        document.getElementById('btn-prev').disabled = logOffset === 0;
+        document.getElementById('btn-next').disabled = logOffset + LOG_LIMIT >= data.total;
+
         if (!data.logs || data.logs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-400">No hay escaneos aún</td></tr>';
             return;
@@ -114,9 +128,13 @@ async function loadLogs() {
             </tr>
         `).join('');
     } catch (err) {
-        console.error('Error loading logs:', err);
+        toast(err.message, 'error');
     }
 }
+
+function pagePrev() { if (logOffset > 0) { logOffset -= LOG_LIMIT; loadLogs(); } }
+function pageNext() { logOffset += LOG_LIMIT; loadLogs(); }
+
 loadLogs();
 </script>
 </body>
