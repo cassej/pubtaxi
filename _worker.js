@@ -103,10 +103,15 @@ export default {
       }
     }
 
-    // 4. Everything else - serve from Pages Assets
+    // 4. Everything else - serve from Pages Assets (auto-provided by Cloudflare Pages)
     console.log(JSON.stringify({ event: "fetch_asset", url: url.pathname }));
 
-    // Use ASSETS binding for static files
-    return env.ASSETS.fetch(request);
+    // Cloudflare Pages provides env.ASSETS automatically
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
+    // Fallback: try fetch (for local development)
+    return fetch(request);
   }
 };
