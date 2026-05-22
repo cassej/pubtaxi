@@ -26,6 +26,44 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.split('/').filter(Boolean);
 
+    // Static files - let Pages handle them
+    if (request.method === 'GET' && !path[0]) {
+      return new Response(null, {
+        status: 200,
+        headers: { "x-skip-worker": "true" }
+      });
+    }
+
+    // Serve static assets (css, js, images, etc)
+    if (request.method === 'GET' && (
+      path[0]?.endsWith('.html') ||
+      path[0]?.endsWith('.css') ||
+      path[0]?.endsWith('.js') ||
+      path[0]?.endsWith('.png') ||
+      path[0]?.endsWith('.jpg') ||
+      path[0]?.endsWith('.svg') ||
+      path[0]?.endsWith('.ico')
+    )) {
+      return new Response(null, {
+        status: 200,
+        headers: { "x-skip-worker": "true" }
+      });
+    }
+
+    // Serve files from subdirectories
+    if (request.method === 'GET' && (
+      path[0] === 'admin' ||
+      path[0] === 'advertiser' ||
+      path[0] === 'driver' ||
+      path[0] === 'img' ||
+      path[0] === 'js'
+    )) {
+      return new Response(null, {
+        status: 200,
+        headers: { "x-skip-worker": "true" }
+      });
+    }
+
     // 1. Handle Redirects: /r/aB3
     if (path[0] === 'r' && path[1]) {
       const qrId = fromBase62(path[1]);
@@ -162,8 +200,10 @@ export default {
     }
 
     // FALLBACK: Serve static content from Pages
+    // Return 200 with x-skip-worker header to let Pages handle static files
     return new Response(null, {
-      headers: { "x-skip-worker": "true" } 
+      status: 200,
+      headers: { "x-skip-worker": "true" }
     });
   }
 };
