@@ -1,5 +1,5 @@
 import { hashPassword, signJWT, timingSafeEqual } from './crypto.js';
-import { fromBase62, toBase62 } from './index.js';
+import { fromBase62, toBase62 } from './utils.js';
 
 // JSON-RPC 2.0 Error codes
 const ERROR_CODES = {

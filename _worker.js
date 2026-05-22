@@ -1,25 +1,6 @@
-import { renderMinisite } from './minisite.js';
-import { handleJsonRpc } from './api-handlers.js';
-
-const BASE62_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-export function toBase62(num) {
-  if (num === 0) return BASE62_CHARS[0];
-  let result = "";
-  while (num > 0) {
-    result = BASE62_CHARS[num % 62] + result;
-    num = Math.floor(num / 62);
-  }
-  return result;
-}
-
-export function fromBase62(str) {
-  let num = 0;
-  for (let i = 0; i < str.length; i++) {
-    num = num * 62 + BASE62_CHARS.indexOf(str[i]);
-  }
-  return num;
-}
+import { renderMinisite } from './src/minisite.js';
+import { handleJsonRpc } from './src/api-handlers.js';
+import { toBase62, fromBase62 } from './src/utils.js';
 
 export default {
   fetch: async (request, env, ctx) => {
@@ -119,8 +100,9 @@ export default {
       }
     }
 
-    // 4. Everything else - fetch from Pages (static files)
-    console.log(JSON.stringify({ event: "fetch_static", url: url.pathname }));
-    return fetch(request);
+    // 4. Everything else - let Pages serve static files
+    // Don't return anything -> Pages Assets will handle it
+    console.log(JSON.stringify({ event: "pass_to_pages", url: url.pathname }));
+    return undefined;
   }
 };

@@ -1,5 +1,5 @@
 import { renderMinisite } from '../../src/minisite.js';
-import { fromBase62 } from '../../src/index.js'; // I'll need to export this or move it
+import { fromBase62 } from '../../src/utils.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
