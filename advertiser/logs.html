@@ -71,7 +71,7 @@
     <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
         <h1 class="text-xl lg:text-2xl font-bold text-[#003366] mb-6">📋 Logs de Transiciones</h1>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto mb-6">
             <div class="p-4 lg:p-6 bg-gray-50 border-b border-gray-100">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <h3 class="font-bold text-gray-800">Filtros</h3>
@@ -92,9 +92,8 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+                <table class="w-full text-left min-w-[600px]">
                     <thead>
                         <tr class="bg-gray-50 text-gray-500 text-[11px] uppercase font-bold border-b">
                             <th class="p-4">Fecha / Hora</th>
@@ -213,7 +212,6 @@
 
                     </tbody>
                 </table>
-            </div>
 
             <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
                 <p class="text-xs text-gray-500">Mostrando 5 de 1,248 registros</p>
