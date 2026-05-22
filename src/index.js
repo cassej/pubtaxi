@@ -13,6 +13,14 @@ function toBase62(num) {
   return result;
 }
 
+function fromBase62(str) {
+  let num = 0;
+  for (let i = 0; i < str.length; i++) {
+    num = num * 62 + BASE62_CHARS.indexOf(str[i]);
+  }
+  return num;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -20,14 +28,14 @@ export default {
 
     // 1. Handle Redirects: /r/aB3
     if (path[0] === 'r' && path[1]) {
-      const shortId = path[1];
+      const qrId = fromBase62(path[1]);
       
       const qr = await env.DB.prepare(`
         SELECT q.*, c.target_url, c.minisite_id 
         FROM qr_codes q
         JOIN campaigns c ON q.campaign_id = c.id
-        WHERE q.short_id = ? AND c.status = 'active'
-      `).bind(shortId).first();
+        WHERE q.id = ? AND c.status = 'active'
+      `).bind(qrId).first();
 
       if (!qr) return new Response("Not Found", { status: 404 });
 
@@ -37,13 +45,13 @@ export default {
 
       ctx.waitUntil((async () => {
         await env.DB.prepare(`INSERT OR IGNORE INTO clients (id, user_agent, ip_country) VALUES (?, ?, ?)`).bind(clientId, userAgent, country).run();
-        await env.DB.prepare(`INSERT INTO events (qr_id, client_id, event_type) VALUES (?, ?, 'scan')`).bind(shortId, clientId).run();
+        await env.DB.prepare(`INSERT INTO events (qr_id, client_id, event_type) VALUES (?, ?, 'scan')`).bind(qrId, clientId).run();
       })());
 
       if (qr.redirect_mode === 'minisite') {
         const minisite = await env.DB.prepare("SELECT * FROM minisites WHERE id = ?").bind(qr.minisite_id).first();
         if (minisite) {
-          return new Response(renderMinisite(minisite, shortId), {
+          return new Response(renderMinisite(minisite, path[1]), {
             headers: { 
               "Content-Type": "text/html",
               "Set-Cookie": `puid=${clientId}; Max-Age=31536000; Path=/; HttpOnly; Secure; SameSite=Lax`
@@ -64,8 +72,10 @@ export default {
     // 2. Event API
     if (path[0] === 'api' && path[1] === 'event' && request.method === 'POST') {
       const { qr_id, event_type, metadata } = await request.json();
+      const qrNumericId = typeof qr_id === 'string' ? fromBase62(qr_id) : qr_id;
       const clientId = request.headers.get("Cookie")?.match(/puid=([^;]+)/)?.[1];
-      ctx.waitUntil(env.DB.prepare(`INSERT INTO events (qr_id, client_id, event_type, metadata) VALUES (?, ?, ?, ?)`).bind(qr_id, clientId, event_type, JSON.stringify(metadata)).run());
+      ctx.waitUntil(env.DB.prepare(`INSERT INTO events (qr_id, client_id, event_type, metadata) VALUES (?, ?, ?, ?)`)
+          .bind(qrNumericId, clientId, event_type, JSON.stringify(metadata)).run());
       return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
     }
 
@@ -73,9 +83,7 @@ export default {
     if (path[0] === 'api' && path[1] === 'login' && request.method === 'POST') {
       const { email, password } = await request.json();
       const user = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
-      
       const incomingHash = await hashPassword(password);
-      
       if (user && user.password_hash === incomingHash) { 
         const token = await signJWT({ id: user.id, role: user.role }, env.JWT_SECRET);
         return new Response(JSON.stringify({ success: true, role: user.role }), {
@@ -88,7 +96,16 @@ export default {
       return new Response(JSON.stringify({ error: "Invalid credentials" }), { status: 401 });
     }
 
-    // ... rest of API (generate-qr, stats, update-campaign, update-minisite)
+    // 4. Admin API: Generate new QR
+    if (path[0] === 'api' && path[1] === 'generate-qr' && request.method === 'POST') {
+      const { vehicle_id, campaign_id, position } = await request.json();
+      const result = await env.DB.prepare("INSERT INTO qr_codes (vehicle_id, campaign_id, position) VALUES (?, ?, ?)")
+          .bind(vehicle_id, campaign_id, position).run();
+      const lastId = result.meta.last_row_id;
+      return new Response(JSON.stringify({ shortId: toBase62(lastId), id: lastId }), { headers: { "Content-Type": "application/json" } });
+    }
+
+    // 5. Stats API
     if (path[0] === 'api' && path[1] === 'stats') {
       const daily = await env.DB.prepare(`SELECT date(created_at) as date, count(*) as count FROM events WHERE created_at > date('now', '-7 days') GROUP BY date(created_at) ORDER BY date ASC`).all();
       const hourly = await env.DB.prepare(`SELECT strftime('%H', created_at) as hour, count(*) as count FROM events GROUP BY hour`).all();
@@ -98,6 +115,7 @@ export default {
     if (path[0] === 'api' && path[1] === 'update-campaign' && request.method === 'POST') {
         const { id, target_url, redirect_mode } = await request.json();
         await env.DB.prepare("UPDATE campaigns SET target_url = ?, status = 'active' WHERE id = ?").bind(target_url, id).run();
+        // Here id is the campaign_id (INTEGER)
         if (redirect_mode) await env.DB.prepare("UPDATE qr_codes SET redirect_mode = ? WHERE campaign_id = ?").bind(redirect_mode, id).run();
         return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
     }
