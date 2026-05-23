@@ -141,6 +141,11 @@
 <script>
     setActiveNav('redirects.html');
 
+    function toggleUrlInput(select) {
+        const field = select.closest('.space-y-4').querySelector('.url-field');
+        field.style.display = select.value === 'direct' ? '' : 'none';
+    }
+
     async function loadVehicles() {
         try {
             const data = await api('vehicle.withAds');
@@ -159,11 +164,13 @@
                         </div>
                     </div>
                     <div class="space-y-4">
-                        <select class="action-select w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]">
+                        <select class="action-select w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" onchange="toggleUrlInput(this)">
                             <option value="minisite" ${v.redirect_mode === 'minisite' ? 'selected' : ''}>📱 Mostrar mi Mini-Sitio</option>
                             <option value="direct" ${v.redirect_mode === 'direct' ? 'selected' : ''}>🔗 Redirección directa</option>
                         </select>
-                        <input type="text" class="url-input w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="https://..." value="${v.target_url || ''}">
+                        <div class="url-field" style="${v.redirect_mode === 'direct' ? '' : 'display:none'}">
+                            <input type="text" class="url-input w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="https://..." value="${v.target_url || ''}">
+                        </div>
                         <button onclick="saveRedirect(this)" class="w-full bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Guardar</button>
                     </div>
                 </div>
@@ -176,13 +183,16 @@
     async function saveRedirect(btn) {
         const container = btn.closest('[data-campaign-id]');
         const campaignId = parseInt(container.dataset.campaignId);
-        const targetUrl = container.querySelector('.url-input').value;
         const redirectMode = container.querySelector('.action-select').value;
+        const params = { id: campaignId, redirect_mode: redirectMode };
+        if (redirectMode === 'direct') {
+            params.target_url = container.querySelector('.url-input').value;
+        }
 
         btn.disabled = true;
         btn.textContent = 'Guardando...';
         try {
-            await api('campaign.update', { id: campaignId, target_url: targetUrl, redirect_mode: redirectMode });
+            await api('campaign.update', params);
             toast('¡Guardado con éxito!', 'success');
         } catch (err) {
             toast(err.message, 'error');
