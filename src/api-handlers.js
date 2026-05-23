@@ -88,6 +88,53 @@ const METHODS = {
     };
   },
 
+  'auth.register': async (params, env) => {
+    const { email, password, name, role } = params;
+    if (!email || !password || !role) throw new Error("Missing required params: email, password, role");
+    if (!['advertiser', 'publisher'].includes(role)) throw new Error("Role must be 'advertiser' or 'publisher'");
+    if (password.length < 6) throw new Error("Password must be at least 6 characters");
+
+    const existing = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
+    if (existing) throw new Error("Email already registered");
+
+    const password_hash = await hashPassword(password);
+    const result = await env.DB.prepare(
+      "INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, ?)"
+    ).bind(email, password_hash, name || '', role).run();
+
+    const token = await signJWT({ id: result.meta.last_row_id, role }, env.JWT_SECRET);
+
+    const dashboardMap = {
+      advertiser: '/advertiser/',
+      publisher: '/driver/'
+    };
+
+    return {
+      success: true,
+      token,
+      user: { id: result.meta.last_row_id, email, role, name: name || '' },
+      redirect: dashboardMap[role]
+    };
+  },
+
+  'auth.changePassword': async (params, env, context) => {
+    const { user } = await authenticate(context.request, env);
+    const { current_password, new_password } = params;
+    if (!current_password || !new_password) throw new Error("Missing required params: current_password, new_password");
+    if (new_password.length < 6) throw new Error("Password must be at least 6 characters");
+
+    const row = await env.DB.prepare("SELECT password_hash FROM users WHERE id = ?").bind(user.id).first();
+    const incomingHash = await hashPassword(current_password);
+    if (!await timingSafeEqual(row.password_hash, incomingHash)) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const newHash = await hashPassword(new_password);
+    await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?").bind(newHash, user.id).run();
+
+    return { success: true };
+  },
+
   'auth.me': async (params, env, context) => {
     const { user } = await authenticate(context.request, env);
     return { user: { id: user.id, email: user.email, role: user.role, name: user.name } };
@@ -185,7 +232,7 @@ const METHODS = {
   'admin.campaigns.list': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
     const campaigns = await env.DB.prepare(`
-      SELECT c.id, c.name, c.target_url, c.status, c.advertiser_id, c.created_at,
+      SELECT c.id, c.name, c.target_url, c.status, c.advertiser_id, c.created_at, c.design_file,
              u.name as advertiser_name, u.email as advertiser_email,
              (SELECT COUNT(*) FROM qr_codes qc WHERE qc.campaign_id = c.id) as vehicle_count,
              (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'scan' AND e.created_at > date('now', '-30 days')) as scans_month,
@@ -233,14 +280,15 @@ const METHODS = {
 
   'admin.campaigns.update': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
-    const { id, name, status } = params;
+    const { id, name, status, design_file } = params;
     if (!id) throw new Error("Missing required params: id");
 
-    if (name || status) {
+    if (name || status || design_file !== undefined) {
       const updates = [];
       const values = [];
       if (name) { updates.push("name = ?"); values.push(name); }
       if (status) { updates.push("status = ?"); values.push(status); }
+      if (design_file !== undefined) { updates.push("design_file = ?"); values.push(design_file); }
       values.push(id);
       await env.DB.prepare(`UPDATE campaigns SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
     }
@@ -556,29 +604,43 @@ const METHODS = {
     return { logs: logs.results, total: total ? total.c : 0 };
   },
 
-  'advertiser.minisite.get': async (params, env, context) => {
+  'advertiser.minisite.list': async (params, env, context) => {
     const { user } = await authenticate(context.request, env, ['advertiser']);
 
-    const minisite = await env.DB.prepare(
-      "SELECT id, title, config FROM minisites WHERE advertiser_id = ? LIMIT 1"
-    ).bind(user.id).first();
+    const minisites = await env.DB.prepare(
+      "SELECT id, title, created_at FROM minisites WHERE advertiser_id = ? ORDER BY created_at DESC"
+    ).bind(user.id).all();
+
+    return { minisites: minisites.results };
+  },
+
+  'advertiser.minisite.get': async (params, env, context) => {
+    const { user } = await authenticate(context.request, env, ['advertiser']);
+    const id = params.id;
+
+    let minisite;
+    if (id) {
+      minisite = await env.DB.prepare(
+        "SELECT id, title, config FROM minisites WHERE id = ? AND advertiser_id = ?"
+      ).bind(id, user.id).first();
+    } else {
+      minisite = await env.DB.prepare(
+        "SELECT id, title, config FROM minisites WHERE advertiser_id = ? ORDER BY created_at DESC LIMIT 1"
+      ).bind(user.id).first();
+    }
 
     return { minisite: minisite || null };
   },
 
   'advertiser.minisite.save': async (params, env, context) => {
     const { user } = await authenticate(context.request, env, ['advertiser']);
-    const { title, config, campaign_id } = params;
-
-    const existing = await env.DB.prepare(
-      "SELECT id FROM minisites WHERE advertiser_id = ? LIMIT 1"
-    ).bind(user.id).first();
+    const { id, title, config, campaign_id } = params;
 
     let minisiteId;
-    if (existing) {
-      await env.DB.prepare("UPDATE minisites SET title = ?, config = ? WHERE id = ?")
-        .bind(title || '', JSON.stringify(config || {}), existing.id).run();
-      minisiteId = existing.id;
+    if (id) {
+      await env.DB.prepare("UPDATE minisites SET title = ?, config = ? WHERE id = ? AND advertiser_id = ?")
+        .bind(title || '', JSON.stringify(config || {}), id, user.id).run();
+      minisiteId = id;
     } else {
       const result = await env.DB.prepare("INSERT INTO minisites (advertiser_id, title, config) VALUES (?, ?, ?)")
         .bind(user.id, title || '', JSON.stringify(config || {})).run();
@@ -593,6 +655,17 @@ const METHODS = {
     return { success: true, minisite_id: minisiteId };
   },
 
+  'advertiser.minisite.delete': async (params, env, context) => {
+    const { user } = await authenticate(context.request, env, ['advertiser']);
+    const { id } = params;
+    if (!id) throw new Error("Missing required params: id");
+
+    await env.DB.prepare("DELETE FROM minisites WHERE id = ? AND advertiser_id = ?")
+      .bind(id, user.id).run();
+
+    return { success: true };
+  },
+
   'qr.generate': async (params, env, context) => {
     await authenticate(context.request, env, ['advertiser', 'admin']);
     const { vehicle_id, campaign_id, position } = params;
@@ -603,6 +676,17 @@ const METHODS = {
     const lastId = result.meta.last_row_id;
 
     return { shortId: toBase62(lastId), id: lastId };
+  },
+
+  'qr.delete': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { id } = params;
+    if (!id) throw new Error("Missing required params: id");
+
+    await env.DB.prepare("DELETE FROM events WHERE qr_id = ?").bind(id).run();
+    await env.DB.prepare("DELETE FROM qr_codes WHERE id = ?").bind(id).run();
+
+    return { success: true };
   },
 
   'campaign.update': async (params, env, context) => {
@@ -624,6 +708,55 @@ const METHODS = {
       await env.DB.prepare("UPDATE qr_codes SET redirect_mode = ? WHERE campaign_id = ?")
           .bind(redirect_mode, id).run();
     }
+
+    return { success: true };
+  },
+
+  'campaign.updateAll': async (params, env, context) => {
+    const { user } = await authenticate(context.request, env, ['advertiser']);
+    const { redirect_mode, target_url } = params;
+    if (!redirect_mode) throw new Error("Missing required params: redirect_mode");
+
+    const campaigns = await env.DB.prepare(
+      "SELECT id FROM campaigns WHERE advertiser_id = ?"
+    ).bind(user.id).all();
+
+    const ids = campaigns.results.map(c => c.id);
+    if (ids.length === 0) return { success: true, updated: 0 };
+
+    if (target_url !== undefined && target_url !== null) {
+      await env.DB.prepare(
+        `UPDATE campaigns SET target_url = ? WHERE advertiser_id = ?`
+      ).bind(target_url, user.id).run();
+    }
+
+    await env.DB.prepare(
+      `UPDATE qr_codes SET redirect_mode = ? WHERE campaign_id IN (${ids.map(() => '?').join(',')})`
+    ).bind(redirect_mode, ...ids).run();
+
+    return { success: true, updated: ids.length };
+  },
+
+  'advertiser.campaign.create': async (params, env, context) => {
+    const { user } = await authenticate(context.request, env, ['advertiser']);
+    const { name, design_file } = params;
+    if (!name) throw new Error("Missing required params: name");
+
+    const result = await env.DB.prepare(
+      "INSERT INTO campaigns (advertiser_id, name, design_file) VALUES (?, ?, ?)"
+    ).bind(user.id, name, design_file || null).run();
+
+    return { success: true, id: result.meta.last_row_id };
+  },
+
+  'advertiser.campaign.setMinisite': async (params, env, context) => {
+    const { user } = await authenticate(context.request, env, ['advertiser']);
+    const { campaign_id, minisite_id } = params;
+    if (!campaign_id) throw new Error("Missing required params: campaign_id");
+
+    await env.DB.prepare(
+      "UPDATE campaigns SET minisite_id = ? WHERE id = ? AND advertiser_id = ?"
+    ).bind(minisite_id || null, campaign_id, user.id).run();
 
     return { success: true };
   },

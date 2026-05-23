@@ -119,6 +119,9 @@ export default {
       if (path[0] === 'auth') {
         return new Response(null, { status: 302, headers: { "Location": "/auth.html" } });
       }
+      if (path[0] === 'password') {
+        return new Response(null, { status: 302, headers: { "Location": "/password.html" } });
+      }
       if (path[0] === 'admin' && !path[1]) {
         return new Response(null, { status: 302, headers: { "Location": "/admin/index.html" } });
       }

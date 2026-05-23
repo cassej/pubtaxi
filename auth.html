@@ -18,6 +18,11 @@
             <p class="text-gray-500 mt-2 text-sm">Panel de Control</p>
         </div>
 
+        <div class="flex mb-6 bg-gray-100 rounded-xl p-1">
+            <button id="tab-login" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white shadow-sm">Iniciar Sesión</button>
+            <button id="tab-register" class="flex-1 py-2 text-sm font-medium text-gray-500 hover:text-gray-800">Registrarse</button>
+        </div>
+
         <form id="loginForm" class="space-y-4">
             <div>
                 <label class="text-xs font-bold text-gray-400 uppercase">Correo Electrónico</label>
@@ -27,25 +32,47 @@
                 <label class="text-xs font-bold text-gray-400 uppercase">Contraseña</label>
                 <input type="password" required class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#003366]" placeholder="••••••••">
             </div>
-            <div class="flex items-center justify-between text-sm">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-[#003366] focus:ring-[#003366]">
-                    <span class="text-gray-600">Recordarme</span>
-                </label>
-            </div>
             <button type="submit" class="w-full bg-[#003366] text-white py-3 rounded-xl font-bold hover:bg-blue-950 transition">
                 Iniciar Sesión
             </button>
         </form>
 
-        <div class="mt-6 text-center text-sm text-gray-500">
-            ¿No tienes cuenta? <a href="#" class="text-[#003366] font-semibold hover:underline">Regístrate gratis</a>
-        </div>
+        <form id="registerForm" class="space-y-4 hidden">
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Nombre Completo</label>
+                <input type="text" id="reg-name" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#003366]" placeholder="Tu nombre">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Correo Electrónico</label>
+                <input type="email" id="reg-email" required class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#003366]" placeholder="tu@correo.com">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Contraseña (mín. 6 caracteres)</label>
+                <input type="password" id="reg-password" required minlength="6" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#003366]" placeholder="••••••••">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Tipo de Cuenta</label>
+                <div class="flex gap-3 mt-1">
+                    <label class="flex-1 flex items-center justify-center gap-2 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#003366] has-[:checked]:border-[#003366] has-[:checked]:bg-[#003366]/5">
+                        <input type="radio" name="role" value="advertiser" class="accent-[#003366]" checked>
+                        <span class="text-sm font-medium">Anunciante</span>
+                    </label>
+                    <label class="flex-1 flex items-center justify-center gap-2 p-3 border border-gray-200 rounded-xl cursor-pointer hover:border-[#003366] has-[:checked]:border-[#003366] has-[:checked]:bg-[#003366]/5">
+                        <input type="radio" name="role" value="publisher" class="accent-[#003366]">
+                        <span class="text-sm font-medium">Taxista</span>
+                    </label>
+                </div>
+            </div>
+            <button type="submit" class="w-full bg-[#003366] text-white py-3 rounded-xl font-bold hover:bg-blue-950 transition">
+                Crear Cuenta
+            </button>
+        </form>
     </div>
 
     <p class="text-center text-xs text-gray-400 mt-6">&copy; 2026 pubtaxi.lat - Panamá</p>
 </div>
 
+<script src="js/ui.js"></script>
 <script src="js/auth.js"></script>
 </body>
 </html>

@@ -76,14 +76,29 @@
                 <label class="text-sm font-medium text-gray-700">Modo de configuración:</label>
                 <div class="flex items-center gap-4">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="config-mode" value="global" class="w-4 h-4 border-gray-300 text-[#003366] focus:ring-[#003366]">
+                        <input type="radio" name="config-mode" value="global" class="w-4 h-4 border-gray-300 text-[#003366] focus:ring-[#003366]" onchange="toggleConfigMode(this)">
                         <span class="text-sm text-gray-600">Global</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="config-mode" value="individual" checked class="w-4 h-4 border-gray-300 text-[#003366] focus:ring-[#003366]">
+                        <input type="radio" name="config-mode" value="individual" checked class="w-4 h-4 border-gray-300 text-[#003366] focus:ring-[#003366]" onchange="toggleConfigMode(this)">
                         <span class="text-sm text-gray-600">Individual</span>
                     </label>
                 </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+                <div class="flex-1">
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Nueva Campaña</label>
+                    <input type="text" id="new-campaign-name" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366] mt-1" placeholder="Nombre de la campaña">
+                </div>
+                <div class="flex-1">
+                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Archivo de diseño (URL)</label>
+                    <input type="url" id="new-campaign-design" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366] mt-1" placeholder="https://... (Google Drive, Imgur, etc.)">
+                    <p class="text-[10px] text-gray-400 mt-1">Файл с placeholder'ом для вставки QR-кода</p>
+                </div>
+                <button onclick="createCampaign()" class="bg-[#003366] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Crear Campaña</button>
             </div>
         </div>
 
@@ -91,7 +106,7 @@
             <p class="text-sm text-gray-500 mb-4">Configuración para todos los anuncios</p>
 
             <div class="space-y-4">
-                <select id="global-action" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]">
+                <select id="global-action" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" onchange="toggleGlobalUrl(this)">
                     <option value="minisite">📱 Mostrar mi Mini-Sitio</option>
                     <option value="direct">🔗 Redirección directa</option>
                 </select>
@@ -123,7 +138,7 @@
                     </div>
                 </div>
 
-                <button onclick="toast('Guardado', 'success')" class="bg-[#FFB800] text-[#003366] px-6 py-3 rounded-xl text-sm font-bold hover:shadow-lg transition">Aplicar a Todos</button>
+                <button onclick="saveGlobal()" class="bg-[#FFB800] text-[#003366] px-6 py-3 rounded-xl text-sm font-bold hover:shadow-lg transition">Aplicar a Todos</button>
             </div>
         </div>
 
@@ -138,71 +153,146 @@
 <script src="../js/sidebar.js"></script>
 <script src="js/common.js"></script>
 <script src="js/mobile.js"></script>
-<script>
-    setActiveNav('redirects.html');
+    <script>
+        setActiveNav('redirects.html');
 
-    function toggleUrlInput(select) {
-        const field = select.closest('.space-y-4').querySelector('.url-field');
-        field.style.display = select.value === 'direct' ? '' : 'none';
-    }
+        let userMinisites = [];
+        let allCampaigns = [];
 
-    async function loadVehicles() {
-        try {
-            const data = await api('vehicle.withAds');
-            const container = document.getElementById('individual-config');
-            if (!data.vehicles || data.vehicles.length === 0) {
-                container.innerHTML = '<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center text-gray-400">No tienes vehículos con anuncios activos</div>';
-                return;
+        function toggleConfigMode(radio) {
+            const mode = radio.value;
+            document.getElementById('global-config').classList.toggle('hidden', mode !== 'global');
+            document.getElementById('individual-config').classList.toggle('hidden', mode !== 'individual');
+        }
+
+        function toggleGlobalUrl(select) {
+            document.getElementById('global-url-section').classList.toggle('hidden', select.value !== 'direct');
+        }
+
+        function toggleUrlInput(select) {
+            const field = select.closest('.space-y-4').querySelector('.url-field');
+            field.style.display = select.value === 'direct' ? '' : 'none';
+        }
+
+        async function createCampaign() {
+            const name = document.getElementById('new-campaign-name').value.trim();
+            const designFile = document.getElementById('new-campaign-design').value.trim();
+            if (!name) { toast('Ingresa un nombre para la campaña', 'error'); return; }
+            try {
+                await api('advertiser.campaign.create', { name, design_file: designFile || undefined });
+                document.getElementById('new-campaign-name').value = '';
+                document.getElementById('new-campaign-design').value = '';
+                toast('Campaña creada', 'success');
+                await loadCampaigns();
+            } catch (err) {
+                toast(err.message, 'error');
             }
-            container.innerHTML = data.vehicles.map(v => `
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6" data-vehicle-id="${v.id}" data-campaign-id="${v.campaign_id}" data-qr-id="${v.qr_id}">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="text-2xl">🚕</span>
-                        <div>
-                            <p class="font-semibold text-gray-800">${v.plate_number || '#' + v.id}</p>
-                            <p class="text-xs text-gray-500">${v.model || ''} - ${v.position || ''}</p>
+        }
+
+        async function saveGlobal() {
+            const mode = document.getElementById('global-action').value;
+            const targetUrl = document.getElementById('global-url').value;
+            try {
+                await api('campaign.updateAll', { redirect_mode: mode, target_url: mode === 'direct' ? targetUrl : undefined });
+                toast('Configuración global aplicada a todas las campañas', 'success');
+            } catch (err) {
+                toast(err.message, 'error');
+            }
+        }
+
+        async function loadMinisites() {
+            try {
+                const data = await api('advertiser.minisite.list');
+                userMinisites = data.minisites || [];
+            } catch (err) { /* ignore */ }
+        }
+
+        async function loadCampaigns() {
+            try {
+                const data = await api('advertiser.campaigns');
+                allCampaigns = data.campaigns || [];
+            } catch (err) { /* ignore */ }
+        }
+
+        async function loadVehicles() {
+            try {
+                const data = await api('vehicle.withAds');
+                const container = document.getElementById('individual-config');
+                if (!data.vehicles || data.vehicles.length === 0) {
+                    container.innerHTML = '<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center text-gray-400">No tienes vehículos con anuncios activos</div>';
+                    return;
+                }
+                container.innerHTML = data.vehicles.map(v => `
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:p-6" data-vehicle-id="${v.id}" data-campaign-id="${v.campaign_id}" data-qr-id="${v.qr_id}">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="text-2xl">🚕</span>
+                            <div>
+                                <p class="font-semibold text-gray-800">${v.plate_number || '#' + v.id}</p>
+                                <p class="text-xs text-gray-500">${v.model || ''} - ${v.position || ''}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <select class="action-select w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" onchange="toggleUrlInput(this)">
+                                <option value="minisite" ${v.redirect_mode === 'minisite' ? 'selected' : ''}>📱 Mostrar mi Mini-Sitio</option>
+                                <option value="direct" ${v.redirect_mode === 'direct' ? 'selected' : ''}>🔗 Redirección directa</option>
+                            </select>
+                            <div class="url-field" style="${v.redirect_mode === 'direct' ? '' : 'display:none'}">
+                                <input type="text" class="url-input w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="https://..." value="${v.target_url || ''}">
+                            </div>
+                            <select class="minisite-select w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]">
+                                <option value="">Sin mini-sitio</option>
+                            </select>
+                            <button onclick="saveRedirect(this)" class="w-full bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Guardar</button>
                         </div>
                     </div>
-                    <div class="space-y-4">
-                        <select class="action-select w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" onchange="toggleUrlInput(this)">
-                            <option value="minisite" ${v.redirect_mode === 'minisite' ? 'selected' : ''}>📱 Mostrar mi Mini-Sitio</option>
-                            <option value="direct" ${v.redirect_mode === 'direct' ? 'selected' : ''}>🔗 Redirección directa</option>
-                        </select>
-                        <div class="url-field" style="${v.redirect_mode === 'direct' ? '' : 'display:none'}">
-                            <input type="text" class="url-input w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="https://..." value="${v.target_url || ''}">
-                        </div>
-                        <button onclick="saveRedirect(this)" class="w-full bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Guardar</button>
-                    </div>
-                </div>
-            `).join('');
-        } catch (err) {
-            toast('Error al cargar vehículos: ' + err.message, 'error');
-        }
-    }
-
-    async function saveRedirect(btn) {
-        const container = btn.closest('[data-campaign-id]');
-        const campaignId = parseInt(container.dataset.campaignId);
-        const redirectMode = container.querySelector('.action-select').value;
-        const params = { id: campaignId, redirect_mode: redirectMode };
-        if (redirectMode === 'direct') {
-            params.target_url = container.querySelector('.url-input').value;
+                `).join('');
+                document.querySelectorAll('.minisite-select').forEach(sel => {
+                    const campaignId = parseInt(sel.closest('[data-campaign-id]').dataset.campaignId);
+                    const campaign = allCampaigns.find(c => c.id === campaignId);
+                    userMinisites.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = m.title || 'Sin título';
+                        if (campaign && campaign.minisite_id === m.id) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                });
+            } catch (err) {
+                toast('Error al cargar vehículos: ' + err.message, 'error');
+            }
         }
 
-        btn.disabled = true;
-        btn.textContent = 'Guardando...';
-        try {
-            await api('campaign.update', params);
-            toast('¡Guardado con éxito!', 'success');
-        } catch (err) {
-            toast(err.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Guardar';
-        }
-    }
+        async function saveRedirect(btn) {
+            const container = btn.closest('[data-campaign-id]');
+            const campaignId = parseInt(container.dataset.campaignId);
+            const redirectMode = container.querySelector('.action-select').value;
+            const minisiteId = container.querySelector('.minisite-select').value;
+            const params = { id: campaignId, redirect_mode: redirectMode };
+            if (redirectMode === 'direct') {
+                params.target_url = container.querySelector('.url-input').value;
+            }
 
-    loadVehicles();
-</script>
+            btn.disabled = true;
+            btn.textContent = 'Guardando...';
+            try {
+                await api('campaign.update', params);
+                if (minisiteId) {
+                    await api('advertiser.campaign.setMinisite', { campaign_id: campaignId, minisite_id: parseInt(minisiteId) });
+                }
+                toast('¡Guardado con éxito!', 'success');
+            } catch (err) {
+                toast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Guardar';
+            }
+        }
+
+        async function init() {
+            await Promise.all([loadMinisites(), loadCampaigns()]);
+            await loadVehicles();
+        }
+        init();
+    </script>
 </body>
 </html>

@@ -69,15 +69,29 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
     <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
-        <h1 class="text-xl lg:text-2xl font-bold text-[#003366] mb-6">📱 Mi Mini-Sitio</h1>
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl lg:text-2xl font-bold text-[#003366]">📱 Mis Mini-Sitios</h1>
+            <button onclick="createMinisite()" class="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-950 transition">+ Nuevo</button>
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <div class="lg:col-span-1 space-y-3">
+                <div id="minisite-list" class="space-y-2">
+                    <p class="text-sm text-gray-400">Cargando...</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
             <div class="bg-white p-4 lg:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6 lg:max-h-[80vh] overflow-y-auto">
-                <div>
+                <div id="editor-header">
                     <h3 class="font-bold text-lg text-gray-800">Personaliza tu Mini-Sitio Móvil</h3>
                     <p class="text-xs text-gray-400 mt-1">Los pasajeros verán esto inmediatamente al escanear tu QR desde el auto.</p>
                 </div>
+
+                <input type="hidden" id="edit-minisite-id" value="">
 
                 <div class="space-y-2">
                     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">0. Vincular a Campaña</h4>
@@ -282,7 +296,10 @@
                 </div>
             </div>
 
+            </div>
         </div>
+
+    </div>
 
     </main>
 
@@ -298,6 +315,7 @@
     setActiveNav('builder.html');
 
     let userCampaigns = [];
+    let minisites = [];
 
     async function loadCampaigns() {
         try {
@@ -307,6 +325,91 @@
             select.innerHTML = '<option value="">Seleccionar campaña (opcional)</option>' +
                 userCampaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         } catch (err) { /* ignore */ }
+    }
+
+    function renderMinisiteList() {
+        const container = document.getElementById('minisite-list');
+        if (minisites.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">No tienes mini-sitios. Crea uno nuevo.</p>';
+            return;
+        }
+        container.innerHTML = minisites.map(m => `
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 flex items-center justify-between cursor-pointer hover:border-[#003366] transition" onclick="selectMinisite(${m.id})">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">${m.title || 'Sin título'}</p>
+                    <p class="text-[10px] text-gray-400">${new Date(m.created_at).toLocaleDateString('es-PA')}</p>
+                </div>
+                <button onclick="event.stopPropagation(); deleteMinisite(${m.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Eliminar</button>
+            </div>
+        `).join('');
+    }
+
+    async function loadMinisites() {
+        try {
+            const data = await api('advertiser.minisite.list');
+            minisites = data.minisites || [];
+            renderMinisiteList();
+        } catch (err) {
+            toast('Error al cargar mini-sitios: ' + err.message, 'error');
+        }
+    }
+
+    function resetEditor() {
+        document.getElementById('edit-minisite-id').value = '';
+        document.getElementById('input-title').value = 'Tu Negocio';
+        document.getElementById('input-desc').value = '';
+        document.getElementById('input-bg-color').value = '#f9fafb';
+        document.getElementById('bg-color-hex').textContent = '#F9FAFB';
+        document.getElementById('campaign-select').value = '';
+        document.getElementById('show-wa').checked = false;
+        document.getElementById('show-ig').checked = false;
+        document.getElementById('show-fb').checked = false;
+        document.getElementById('show-yt').checked = false;
+        document.getElementById('show-web').checked = false;
+        document.getElementById('show-phone').checked = false;
+        document.getElementById('editor-header').querySelector('h3').textContent = 'Nuevo Mini-Sitio';
+    }
+
+    function createMinisite() {
+        resetEditor();
+    }
+
+    async function selectMinisite(id) {
+        try {
+            const data = await api('advertiser.minisite.get', { id });
+            if (!data.minisite) return;
+            const m = data.minisite;
+            document.getElementById('edit-minisite-id').value = m.id;
+            const config = m.config || {};
+            document.getElementById('editor-header').querySelector('h3').textContent = 'Editar Mini-Sitio';
+            if (config.description) document.getElementById('input-desc').value = config.description;
+            if (m.title) document.getElementById('input-title').value = m.title;
+            if (config.bgColor) {
+                document.getElementById('input-bg-color').value = config.bgColor;
+                document.getElementById('bg-color-hex').textContent = config.bgColor.toUpperCase();
+            }
+            if (config.buttons) {
+                config.buttons.forEach(b => {
+                    const idx = ['wa','ig','fb','yt','web','phone'].findIndex(k => b.url.includes(k) || b.text.includes(['WhatsApp','Instagram','Facebook','YouTube','Sitio','Llamar'][['wa','ig','fb','yt','web','phone'].indexOf(k)]));
+                });
+            }
+            const linked = userCampaigns.find(c => c.minisite_id === m.id);
+            document.getElementById('campaign-select').value = linked ? linked.id : '';
+        } catch (err) {
+            toast('Error: ' + err.message, 'error');
+        }
+    }
+
+    async function deleteMinisite(id) {
+        if (!confirm('¿Eliminar este mini-sitio?')) return;
+        try {
+            await api('advertiser.minisite.delete', { id });
+            toast('Mini-sitio eliminado', 'success');
+            await loadMinisites();
+            if (document.getElementById('edit-minisite-id').value == id) resetEditor();
+        } catch (err) {
+            toast(err.message, 'error');
+        }
     }
 
     async function saveMinisite() {
@@ -335,40 +438,28 @@
         };
 
         const title = document.getElementById('input-title').value;
+        const id = document.getElementById('edit-minisite-id').value;
         const campaignSelect = document.getElementById('campaign-select');
         const campaignId = campaignSelect.value ? parseInt(campaignSelect.value) : null;
 
+        const params = { title, config, campaign_id: campaignId };
+        if (id) params.id = parseInt(id);
+
         try {
-            await api('advertiser.minisite.save', { title, config, campaign_id: campaignId });
+            const result = await api('advertiser.minisite.save', params);
+            document.getElementById('edit-minisite-id').value = result.minisite_id;
             toast('¡Mini-sitio guardado y publicado!', 'success');
+            await loadMinisites();
         } catch (err) {
             toast('Error: ' + err.message, 'error');
         }
     }
 
-    async function loadMinisite() {
-        try {
-            const data = await api('advertiser.minisite.get');
-            if (data.minisite) {
-                const config = data.minisite.config || {};
-                if (config.description) document.getElementById('input-desc').value = config.description;
-                if (data.minisite.title) document.getElementById('input-title').value = data.minisite.title;
-                if (config.bgColor) {
-                    document.getElementById('input-bg-color').value = config.bgColor;
-                    document.getElementById('bg-color-hex').textContent = config.bgColor.toUpperCase();
-                }
-
-                const linked = userCampaigns.find(c => c.minisite_id === data.minisite.id);
-                if (linked) {
-                    document.getElementById('campaign-select').value = linked.id;
-                }
-            }
-        } catch (err) {
-            toast('Error al cargar el mini-sitio: ' + err.message, 'error');
-        }
+    async function init() {
+        await loadCampaigns();
+        await loadMinisites();
     }
-
-    loadCampaigns().then(loadMinisite);
+    init();
 </script>
 </body>
 </html>

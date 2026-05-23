@@ -73,6 +73,7 @@
                         <th class="p-4 text-center">Redirecciones (30d)</th>
                         <th class="p-4">Estado</th>
                         <th class="p-4">Creada</th>
+                        <th class="p-4">Diseño</th>
                         <th class="p-4 text-right">Acciones</th>
                     </tr>
                 </thead>
@@ -106,18 +107,26 @@
 <div id="edit-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
         <h3 class="font-bold text-lg mb-4">Editar Campaña</h3>
-        <form id="edit-form" class="space-y-4">
-            <input type="hidden" id="edit-id">
-            <input type="text" id="edit-name" placeholder="Nombre" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
-            <select id="edit-status" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
-                <option value="active">Activa</option>
-                <option value="inactive">Inactiva</option>
-            </select>
-            <div class="flex gap-3">
-                <button type="button" onclick="closeEditModal()" class="flex-1 py-3 border rounded-xl text-sm font-medium">Cancelar</button>
-                <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950">Guardar</button>
-            </div>
-        </form>
+            <form id="edit-form" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Nombre</label>
+                    <input type="text" id="edit-name" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" required>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Estado</label>
+                    <select id="edit-status" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                        <option value="active">Activa</option>
+                        <option value="inactive">Inactiva</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Design File (URL)</label>
+                    <input type="url" id="edit-design-file" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="https://... (opcional)">
+                    <p class="text-[10px] text-gray-400 mt-1">Ссылка на файл с placeholder'ом для вставки QR-кода</p>
+                </div>
+                <button type="submit" class="w-full bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Guardar Cambios</button>
+            </form>
     </div>
 </div>
 
@@ -133,6 +142,7 @@
         </div>
 
         <div class="flex-1 overflow-y-auto min-h-0">
+            <div id="qr-design-link" class="mb-3 text-xs"></div>
             <div id="qr-list" class="space-y-2 mb-4"></div>
 
             <div class="border-t pt-4">
@@ -195,7 +205,7 @@ function populateSelects() {
 function renderCampaigns() {
     const tbody = document.getElementById('campaigns-tbody');
     if (allCampaigns.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-400">No hay campañas</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-gray-400">No hay campañas</td></tr>';
         return;
     }
     tbody.innerHTML = allCampaigns.map(c => `
@@ -207,6 +217,7 @@ function renderCampaigns() {
             <td class="p-4 text-center font-bold text-blue-600">${c.redirects_month || 0}</td>
             <td class="p-4"><span class="${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-2 py-1 rounded-full text-xs font-bold">${(c.status || 'active').toUpperCase()}</span></td>
             <td class="p-4 text-gray-500 whitespace-nowrap">${c.created_at ? new Date(c.created_at).toLocaleDateString('es-PA') : '-'}</td>
+            <td class="p-4">${c.design_file ? `<a href="${c.design_file}" target="_blank" class="text-[#003366] hover:underline text-xs font-medium">Ver</a>` : '<span class="text-gray-300">—</span>'}</td>
             <td class="p-4 text-right whitespace-nowrap">
                 <button onclick="editCampaign(${c.id})" class="text-[#003366] hover:underline text-xs font-medium mr-2">Editar</button>
                 <button onclick="showQrModal(${c.id})" class="text-[#FFB800] hover:underline text-xs font-medium">QR</button>
@@ -245,6 +256,7 @@ async function editCampaign(id) {
     document.getElementById('edit-id').value = c.id;
     document.getElementById('edit-name').value = c.name;
     document.getElementById('edit-status').value = c.status || 'active';
+    document.getElementById('edit-design-file').value = c.design_file || '';
     document.getElementById('edit-modal').classList.remove('hidden');
 }
 
@@ -256,7 +268,8 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
         await api('admin.campaigns.update', {
             id: parseInt(document.getElementById('edit-id').value),
             name: document.getElementById('edit-name').value,
-            status: document.getElementById('edit-status').value
+            status: document.getElementById('edit-status').value,
+            design_file: document.getElementById('edit-design-file').value
         });
         closeEditModal(); loadCampaigns();
         toast('Campaña actualizada', 'success');
@@ -270,6 +283,12 @@ async function showQrModal(campaignId) {
     qrCampaignName = c ? c.name : '';
     document.getElementById('qr-modal-title').textContent = `QR — ${qrCampaignName}`;
     document.getElementById('qr-result').classList.add('hidden');
+    const designLink = document.getElementById('qr-design-link');
+    if (c && c.design_file) {
+        designLink.innerHTML = `📄 <a href="${c.design_file}" target="_blank" class="text-[#003366] hover:underline">Ver archivo de diseño</a>`;
+    } else {
+        designLink.innerHTML = '';
+    }
 
     await Promise.all([loadQrCodes(campaignId), loadQrVehicles()]);
     document.getElementById('qr-modal').classList.remove('hidden');
@@ -298,6 +317,7 @@ async function loadQrCodes(campaignId) {
                 </div>
                 <div class="flex items-center gap-3">
                     <button onclick="downloadSticker(this)" data-sid="${sid}" data-plate="${plate.replace(/"/g, '&quot;')}" data-pos="${pos.replace(/"/g, '&quot;')}" class="text-[#003366] hover:underline text-xs font-medium">Descargar</button>
+                    <button onclick="deleteQr(${q.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Eliminar</button>
                     <span class="text-xs text-gray-400">${new Date(q.created_at).toLocaleDateString('es-PA')}</span>
                 </div>
             </div>`;
@@ -374,6 +394,16 @@ async function loadQrVehicles() {
                 `<option value="${v.id}">${v.plate_number || '#' + v.id} — ${v.model || ''} (${v.publisher_name || ''})</option>`
             ).join('');
     } catch (err) { /* ignore */ }
+}
+
+async function deleteQr(id) {
+    if (!confirm('¿Eliminar este código QR? Los eventos asociados también se eliminarán.')) return;
+    try {
+        await api('qr.delete', { id });
+        toast('QR eliminado', 'success');
+        await loadQrCodes(qrCampaignId);
+        loadCampaigns();
+    } catch (err) { toast(err.message, 'error'); }
 }
 
 async function assignQr() {
