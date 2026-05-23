@@ -276,6 +276,7 @@ setActiveNav('builder.html');
 
 let userCampaigns = [];
 let editingId = null;
+let currentLogo = '';
 
 const params = new URLSearchParams(window.location.search);
 const editId = params.get('id');
@@ -329,6 +330,10 @@ function resetEditor() {
     document.getElementById('gradient-start-hex').value = '#003366';
     document.getElementById('gradient-end').value = '#FFB800';
     document.getElementById('gradient-end-hex').value = '#FFB800';
+    currentLogo = '';
+    document.getElementById('preview-logo-placeholder').classList.remove('hidden');
+    document.getElementById('preview-logo-img').classList.add('hidden');
+    document.getElementById('preview-logo-img').src = '';
     updatePreview();
 }
 
@@ -355,20 +360,27 @@ async function loadMinisite(id) {
             document.getElementById('input-desc-color').value = cfg.descColor;
             document.getElementById('input-desc-color-hex').value = cfg.descColor;
         }
+        if (cfg.logoUrl) {
+            currentLogo = cfg.logoUrl;
+            document.getElementById('preview-logo-placeholder').classList.add('hidden');
+            const img = document.getElementById('preview-logo-img');
+            img.classList.remove('hidden');
+            img.src = cfg.logoUrl;
+        }
         const linked = userCampaigns.find(c => c.minisite_id === m.id);
         document.getElementById('campaign-select').value = linked ? linked.id : '';
 
         if (cfg.buttons) {
             const btnFields = [
-                { checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link' },
-                { checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link' },
-                { checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link' },
-                { checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link' },
-                { checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link' },
-                { checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link' }
+                { type: 'wa', checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link' },
+                { type: 'ig', checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link' },
+                { type: 'fb', checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link' },
+                { type: 'yt', checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link' },
+                { type: 'web', checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link' },
+                { type: 'phone', checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link' }
             ];
-            btnFields.forEach((bf, i) => {
-                const btn = cfg.buttons[i];
+            btnFields.forEach(bf => {
+                const btn = (cfg.buttons || []).find(b => b.type === bf.type);
                 if (btn) {
                     document.getElementById(bf.checkbox).checked = true;
                     document.getElementById(bf.text).value = btn.text || '';
@@ -388,16 +400,16 @@ async function loadMinisite(id) {
 async function saveMinisite() {
     const buttons = [];
     const btnConfigs = [
-        { checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link' },
-        { checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link' },
-        { checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link' },
-        { checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link' },
-        { checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link' },
-        { checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link' }
+        { type: 'wa', checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link' },
+        { type: 'ig', checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link' },
+        { type: 'fb', checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link' },
+        { type: 'yt', checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link' },
+        { type: 'web', checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link' },
+        { type: 'phone', checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link' }
     ];
     btnConfigs.forEach(c => {
         if (document.getElementById(c.checkbox).checked) {
-            buttons.push({ text: document.getElementById(c.text).value, url: document.getElementById(c.link).value });
+            buttons.push({ type: c.type, text: document.getElementById(c.text).value, url: document.getElementById(c.link).value });
         }
     });
 
@@ -406,7 +418,7 @@ async function saveMinisite() {
         titleColor: document.getElementById('input-title-color').value,
         descColor: document.getElementById('input-desc-color').value,
         description: document.getElementById('input-desc').value,
-        logoUrl: '',
+        logoUrl: currentLogo,
         buttons
     };
 
@@ -502,17 +514,47 @@ syncColor('input-bg-color', 'input-bg-color-hex');
 syncColor('gradient-start', 'gradient-start-hex');
 syncColor('gradient-end', 'gradient-end-hex');
 
-document.getElementById('input-logo').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            document.getElementById('preview-logo-placeholder').classList.add('hidden');
-            const img = document.getElementById('preview-logo-img');
-            img.classList.remove('hidden');
-            img.src = event.target.result;
+function compressLogo(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const max = 200;
+            let w = img.width, h = img.height;
+            if (w > max || h > max) {
+                const ratio = Math.min(max / w, max / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            canvas.toBlob(blob => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            }, 'image/webp', 0.75);
         };
-        reader.readAsDataURL(file);
+        img.onerror = reject;
+        const url = URL.createObjectURL(file);
+        img.src = url;
+    });
+}
+
+document.getElementById('input-logo').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        const dataUrl = await compressLogo(file);
+        currentLogo = dataUrl;
+        document.getElementById('preview-logo-placeholder').classList.add('hidden');
+        const img = document.getElementById('preview-logo-img');
+        img.classList.remove('hidden');
+        img.src = dataUrl;
+    } catch (err) {
+        toast('Error al procesar logo: ' + err.message, 'error');
     }
 });
 
