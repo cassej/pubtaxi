@@ -189,6 +189,7 @@ const METHODS = {
              u.name as advertiser_name, u.email as advertiser_email,
              (SELECT COUNT(*) FROM qr_codes qc WHERE qc.campaign_id = c.id) as vehicle_count,
              (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'scan' AND e.created_at > date('now', '-30 days')) as scans_month,
+             (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'redirect' AND e.created_at > date('now', '-30 days')) as redirects_month,
              c.minisite_id
       FROM campaigns c
       LEFT JOIN users u ON c.advertiser_id = u.id
@@ -441,13 +442,16 @@ const METHODS = {
     const { user } = await authenticate(context.request, env, ['advertiser']);
     const days = params.days || 30;
 
-    const campaigns = await env.DB.prepare(
-      "SELECT id, name, status FROM campaigns WHERE advertiser_id = ?"
-    ).bind(user.id).all();
+    const campaigns = await env.DB.prepare(`
+      SELECT c.id, c.name, c.status,
+             (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'scan') as scan_count,
+             (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'redirect') as redirect_count
+      FROM campaigns c WHERE c.advertiser_id = ?
+    `).bind(user.id).all();
 
     const campaignIds = campaigns.results.map(c => c.id);
     if (campaignIds.length === 0) {
-      return { totalScans: 0, todayScans: 0, dailyAvg: 0, activeCampaigns: 0, daily: [], hourly: [], campaigns: [] };
+      return { totalScans: 0, todayScans: 0, totalRedirects: 0, todayRedirects: 0, dailyAvg: 0, activeCampaigns: 0, daily: [], hourly: [], campaigns: [] };
     }
 
     const placeholders = campaignIds.map(() => '?').join(',');
@@ -462,6 +466,18 @@ const METHODS = {
       SELECT COUNT(*) as c FROM events e
       JOIN qr_codes qc ON e.qr_id = qc.id
       WHERE qc.campaign_id IN (${placeholders}) AND e.event_type = 'scan' AND date(e.created_at) = date('now')
+    `).bind(...campaignIds).first();
+
+    const totalRedirects = await env.DB.prepare(`
+      SELECT COUNT(*) as c FROM events e
+      JOIN qr_codes qc ON e.qr_id = qc.id
+      WHERE qc.campaign_id IN (${placeholders}) AND e.event_type = 'redirect' AND e.created_at > date('now', '-${days} days')
+    `).bind(...campaignIds).first();
+
+    const todayRedirects = await env.DB.prepare(`
+      SELECT COUNT(*) as c FROM events e
+      JOIN qr_codes qc ON e.qr_id = qc.id
+      WHERE qc.campaign_id IN (${placeholders}) AND e.event_type = 'redirect' AND date(e.created_at) = date('now')
     `).bind(...campaignIds).first();
 
     const daily = await env.DB.prepare(`
@@ -485,6 +501,8 @@ const METHODS = {
     return {
       totalScans: totalScans.c,
       todayScans: todayScans.c,
+      totalRedirects: totalRedirects.c,
+      todayRedirects: todayRedirects.c,
       dailyAvg: Math.round(dailyAvg * 10) / 10,
       activeCampaigns,
       daily: daily.results,
@@ -499,7 +517,8 @@ const METHODS = {
     const campaigns = await env.DB.prepare(`
       SELECT c.id, c.name, c.target_url, c.status, c.minisite_id,
              (SELECT COUNT(*) FROM qr_codes qc WHERE qc.campaign_id = c.id) as vehicle_count,
-             (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'scan' AND e.created_at > date('now', '-30 days')) as scans_month
+             (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'scan' AND e.created_at > date('now', '-30 days')) as scans_month,
+             (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.campaign_id = c.id AND e.event_type = 'redirect' AND e.created_at > date('now', '-30 days')) as redirects_month
       FROM campaigns c
       WHERE c.advertiser_id = ?
       ORDER BY c.id DESC
@@ -589,7 +608,7 @@ const METHODS = {
   'campaign.update': async (params, env, context) => {
     const auth = await authenticate(context.request, env, ['advertiser', 'admin']);
     const { id, target_url, redirect_mode } = params;
-    if (!id || !target_url) throw new Error("Missing required params: id, target_url");
+    if (!id) throw new Error("Missing required params: id");
 
     const campaign = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(id).first();
     if (!campaign) throw new Error("Campaign not found");
@@ -597,8 +616,10 @@ const METHODS = {
       throw new Error("Forbidden");
     }
 
-    await env.DB.prepare("UPDATE campaigns SET target_url = ? WHERE id = ?")
-        .bind(target_url, id).run();
+    if (target_url !== undefined && target_url !== null) {
+      await env.DB.prepare("UPDATE campaigns SET target_url = ? WHERE id = ?")
+          .bind(target_url, id).run();
+    }
     if (redirect_mode) {
       await env.DB.prepare("UPDATE qr_codes SET redirect_mode = ? WHERE campaign_id = ?")
           .bind(redirect_mode, id).run();
