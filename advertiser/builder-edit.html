@@ -325,7 +325,7 @@ async function loadMinisite(id) {
         document.getElementById('edit-minisite-id').value = m.id;
         document.getElementById('page-title').textContent = 'Editar Mini-Sitio';
         document.getElementById('input-title').value = m.title || '';
-        const cfg = m.config || {};
+        const cfg = (typeof m.config === 'string' ? JSON.parse(m.config) : m.config) || {};
         document.getElementById('input-desc').value = cfg.description || '';
         if (cfg.bgColor) {
             document.getElementById('input-bg-color').value = cfg.bgColor;
@@ -453,6 +453,20 @@ function updatePreview() {
     if (el) {
         el.addEventListener('input', updatePreview);
         el.addEventListener('change', updatePreview);
+    }
+});
+
+document.getElementById('input-logo').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            document.getElementById('preview-logo-placeholder').classList.add('hidden');
+            const img = document.getElementById('preview-logo-img');
+            img.classList.remove('hidden');
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
     }
 });
 
