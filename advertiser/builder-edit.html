@@ -94,11 +94,13 @@
                         <input type="file" id="input-logo" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#003366] file:text-white hover:file:bg-blue-950 cursor-pointer">
                     </div>
                     <div class="flex items-center gap-2">
-                        <input type="color" id="input-title-color" value="#1f2937" class="w-8 h-10 border-0 rounded cursor-pointer bg-transparent flex-shrink-0">
+                        <input type="color" id="input-title-color" value="#1f2937" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent flex-shrink-0">
+                        <input type="text" id="input-title-color-hex" value="#1f2937" class="w-24 p-2 border rounded-lg text-xs font-mono outline-none focus:border-[#003366]" placeholder="#hex">
                         <input type="text" id="input-title" class="flex-1 p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="Nombre del negocio">
                     </div>
                     <div class="flex items-start gap-2">
-                        <input type="color" id="input-desc-color" value="#6b7280" class="w-8 h-10 border-0 rounded cursor-pointer bg-transparent flex-shrink-0 mt-0.5">
+                        <input type="color" id="input-desc-color" value="#6b7280" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent flex-shrink-0">
+                        <input type="text" id="input-desc-color-hex" value="#6b7280" class="w-24 p-2 border rounded-lg text-xs font-mono outline-none focus:border-[#003366]" placeholder="#hex">
                         <textarea id="input-desc" class="flex-1 p-3 border rounded-xl text-sm outline-none focus:border-[#003366] text-gray-500 text-xs" rows="2" placeholder="Breve descripción"></textarea>
                     </div>
                 </div>
@@ -115,19 +117,25 @@
                     <div id="bg-color-section" class="bg-gray-50 p-3 rounded-xl border border-gray-200">
                         <label class="text-[11px] font-bold text-gray-500 block mb-2">Color de Fondo</label>
                         <div class="flex items-center gap-3">
-                            <input type="color" id="input-bg-color" value="#f9fafb" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent">
-                            <span id="bg-color-hex" class="text-xs font-mono text-gray-500">#F9FAFB</span>
+                            <input type="color" id="input-bg-color" value="#f9fafb" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent flex-shrink-0">
+                            <input type="text" id="input-bg-color-hex" value="#f9fafb" class="flex-1 p-2 border bg-white rounded-lg text-xs font-mono outline-none focus:border-[#003366]" placeholder="#hex">
                         </div>
                     </div>
                     <div id="bg-gradient-section" class="space-y-3 hidden">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
                                 <label class="text-[11px] font-bold text-gray-500 block mb-2">Color Inicio</label>
-                                <input type="color" id="gradient-start" value="#003366" class="w-full h-10 border-0 rounded-lg cursor-pointer">
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="gradient-start" value="#003366" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent flex-shrink-0">
+                                    <input type="text" id="gradient-start-hex" value="#003366" class="flex-1 p-2 border bg-white rounded-lg text-xs font-mono outline-none focus:border-[#003366]" placeholder="#hex">
+                                </div>
                             </div>
                             <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
                                 <label class="text-[11px] font-bold text-gray-500 block mb-2">Color Final</label>
-                                <input type="color" id="gradient-end" value="#FFB800" class="w-full h-10 border-0 rounded-lg cursor-pointer">
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="gradient-end" value="#FFB800" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent flex-shrink-0">
+                                    <input type="text" id="gradient-end-hex" value="#FFB800" class="flex-1 p-2 border bg-white rounded-lg text-xs font-mono outline-none focus:border-[#003366]" placeholder="#hex">
+                                </div>
                             </div>
                         </div>
                         <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
@@ -289,7 +297,7 @@ function resetEditor() {
     document.getElementById('input-title').value = '';
     document.getElementById('input-desc').value = '';
     document.getElementById('input-bg-color').value = '#f9fafb';
-    document.getElementById('bg-color-hex').textContent = '#F9FAFB';
+    document.getElementById('input-bg-color-hex').value = '#f9fafb';
     document.getElementById('campaign-select').value = '';
     document.getElementById('bg-type').value = 'color';
     document.getElementById('bg-color-section').classList.remove('hidden');
@@ -313,6 +321,14 @@ function resetEditor() {
     document.getElementById('btn-web-link').value = 'https://';
     document.getElementById('btn-phone-text').value = 'Llamar Ahora';
     document.getElementById('btn-phone-link').value = 'tel:+507';
+    document.getElementById('input-title-color').value = '#1f2937';
+    document.getElementById('input-title-color-hex').value = '#1f2937';
+    document.getElementById('input-desc-color').value = '#6b7280';
+    document.getElementById('input-desc-color-hex').value = '#6b7280';
+    document.getElementById('gradient-start').value = '#003366';
+    document.getElementById('gradient-start-hex').value = '#003366';
+    document.getElementById('gradient-end').value = '#FFB800';
+    document.getElementById('gradient-end-hex').value = '#FFB800';
     updatePreview();
 }
 
@@ -329,7 +345,15 @@ async function loadMinisite(id) {
         document.getElementById('input-desc').value = cfg.description || '';
         if (cfg.bgColor) {
             document.getElementById('input-bg-color').value = cfg.bgColor;
-            document.getElementById('bg-color-hex').textContent = cfg.bgColor.toUpperCase();
+            document.getElementById('input-bg-color-hex').value = cfg.bgColor;
+        }
+        if (cfg.titleColor) {
+            document.getElementById('input-title-color').value = cfg.titleColor;
+            document.getElementById('input-title-color-hex').value = cfg.titleColor;
+        }
+        if (cfg.descColor) {
+            document.getElementById('input-desc-color').value = cfg.descColor;
+            document.getElementById('input-desc-color-hex').value = cfg.descColor;
         }
         const linked = userCampaigns.find(c => c.minisite_id === m.id);
         document.getElementById('campaign-select').value = linked ? linked.id : '';
@@ -379,6 +403,8 @@ async function saveMinisite() {
 
     const config = {
         bgColor: document.getElementById('input-bg-color').value,
+        titleColor: document.getElementById('input-title-color').value,
+        descColor: document.getElementById('input-desc-color').value,
         description: document.getElementById('input-desc').value,
         logoUrl: '',
         buttons
@@ -442,12 +468,12 @@ function updatePreview() {
     }).join('');
 }
 
-['input-title', 'input-desc', 'input-title-color', 'input-desc-color', 'input-bg-color',
+['input-title', 'input-desc', 'input-title-color', 'input-title-color-hex', 'input-desc-color', 'input-desc-color-hex', 'input-bg-color', 'input-bg-color-hex',
  'show-wa', 'show-ig', 'show-fb', 'show-yt', 'show-web', 'show-phone',
  'btn-wa-text', 'btn-wa-link', 'btn-ig-text', 'btn-ig-link',
  'btn-fb-text', 'btn-fb-link', 'btn-yt-text', 'btn-yt-link',
  'btn-web-text', 'btn-web-link', 'btn-phone-text', 'btn-phone-link',
- 'bg-type', 'gradient-start', 'gradient-end', 'gradient-direction'
+ 'bg-type', 'gradient-start', 'gradient-start-hex', 'gradient-end', 'gradient-end-hex', 'gradient-direction'
 ].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -455,6 +481,26 @@ function updatePreview() {
         el.addEventListener('change', updatePreview);
     }
 });
+
+function syncColor(pickerId, hexId) {
+    const picker = document.getElementById(pickerId);
+    const hex = document.getElementById(hexId);
+    picker.addEventListener('input', () => { hex.value = picker.value; });
+    picker.addEventListener('change', () => { hex.value = picker.value; });
+    hex.addEventListener('input', () => {
+        const val = hex.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(val)) { picker.value = val; }
+    });
+    hex.addEventListener('blur', () => {
+        const val = hex.value.trim();
+        if (!/^#[0-9a-fA-F]{6}$/.test(val)) { hex.value = picker.value; }
+    });
+}
+syncColor('input-title-color', 'input-title-color-hex');
+syncColor('input-desc-color', 'input-desc-color-hex');
+syncColor('input-bg-color', 'input-bg-color-hex');
+syncColor('gradient-start', 'gradient-start-hex');
+syncColor('gradient-end', 'gradient-end-hex');
 
 document.getElementById('input-logo').addEventListener('change', function(e) {
     const file = e.target.files[0];
