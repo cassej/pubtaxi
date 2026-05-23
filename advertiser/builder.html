@@ -38,7 +38,6 @@
                 </svg>
             </button>
         </div>
-
         <nav class="p-4 space-y-1">
             <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
                 📊 <span>Analítica</span>
@@ -53,7 +52,6 @@
                 📋 <span>Logs</span>
             </a>
         </nav>
-
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
             <div class="flex items-center gap-3 px-4 py-2">
                 <div class="w-8 h-8 bg-[#003366] rounded-full flex items-center justify-center text-white text-sm font-bold">T</div>
@@ -65,401 +63,464 @@
         </div>
     </aside>
 
-    <!-- Overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
 
     <main class="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8">
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-xl lg:text-2xl font-bold text-[#003366]">📱 Mis Mini-Sitios</h1>
-            <button onclick="createMinisite()" class="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-950 transition">+ Nuevo</button>
+            <button onclick="openEditModal(null)" class="bg-[#003366] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-950 transition">+ Nuevo</button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div id="minisite-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <p class="text-sm text-gray-400 col-span-full text-center py-12">Cargando...</p>
+        </div>
+    </main>
 
-            <div class="lg:col-span-1 space-y-3">
-                <div id="minisite-list" class="space-y-2">
-                    <p class="text-sm text-gray-400">Cargando...</p>
-                </div>
-            </div>
+</div>
 
-            <div class="lg:col-span-2">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Edit Modal -->
+<div id="edit-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
+            <h3 class="font-bold text-lg text-gray-800" id="modal-title">Nuevo Mini-Sitio</h3>
+            <button onclick="closeEditModal()" class="p-2 rounded-lg hover:bg-gray-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
 
-            <div class="bg-white p-4 lg:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6 lg:max-h-[80vh] overflow-y-auto">
-                <div id="editor-header">
-                    <h3 class="font-bold text-lg text-gray-800">Personaliza tu Mini-Sitio Móvil</h3>
-                    <p class="text-xs text-gray-400 mt-1">Los pasajeros verán esto inmediatamente al escanear tu QR desde el auto.</p>
-                </div>
+        <div class="flex-1 overflow-y-auto p-4 lg:p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                <!-- Editor -->
+                <div class="space-y-5">
+                    <input type="hidden" id="edit-minisite-id" value="">
 
-                <input type="hidden" id="edit-minisite-id" value="">
-
-                <div class="space-y-2">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">0. Vincular a Campaña</h4>
-                    <select id="campaign-select" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
-                        <option value="">Seleccionar campaña (opcional)</option>
-                    </select>
-                    <p class="text-[10px] text-gray-400">Al guardar, este mini-sitio se vinculará a la campaña seleccionada</p>
-                </div>
-
-                <div class="space-y-3">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">1. Identidad de tu Negocio</h4>
-
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                        <label class="text-[11px] font-bold text-gray-500 block mb-1">Logotipo del Negocio</label>
-                        <input type="file" id="input-logo" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#003366] file:text-white hover:file:bg-blue-950 cursor-pointer">
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <input type="color" id="input-title-color" value="#1f2937" class="w-8 h-10 border-0 rounded cursor-pointer bg-transparent flex-shrink-0">
-                        <input type="text" id="input-title" value="Taller Automotriz Central" class="flex-1 p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="Nombre del negocio">
-                    </div>
-
-                    <div class="flex items-start gap-2">
-                        <input type="color" id="input-desc-color" value="#6b7280" class="w-8 h-10 border-0 rounded cursor-pointer bg-transparent flex-shrink-0 mt-0.5">
-                        <textarea id="input-desc" class="flex-1 p-3 border rounded-xl text-sm outline-none focus:border-[#003366] text-gray-500 text-xs" rows="2" placeholder="Breve descripción">Mantenimiento preventivo, frenos, suspensión y diagnóstico por computadora en Ciudad de Panamá.</textarea>
-                    </div>
-                </div>
-
-                <div class="space-y-3 pt-2 border-t border-gray-100">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">2. Fondo</h4>
-
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                        <label class="text-[11px] font-bold text-gray-500 block mb-2">Tipo de Fondo</label>
-                        <select id="bg-type" class="w-full p-2 bg-white border rounded-lg text-xs outline-none">
-                            <option value="color">Color Sólido</option>
-                            <option value="gradient">Gradiente</option>
-                            <option value="image">Imagen</option>
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Vincular a Campaña</h4>
+                        <select id="campaign-select" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
+                            <option value="">Seleccionar campaña (opcional)</option>
                         </select>
                     </div>
 
-                    <div id="bg-color-section" class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                        <label class="text-[11px] font-bold text-gray-500 block mb-2">Color de Fondo</label>
-                        <div class="flex items-center gap-3">
-                            <input type="color" id="input-bg-color" value="#f9fafb" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent">
-                            <span id="bg-color-hex" class="text-xs font-mono text-gray-500">#F9FAFB</span>
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Identidad del Negocio</h4>
+                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                            <label class="text-[11px] font-bold text-gray-500 block mb-1">Logotipo</label>
+                            <input type="file" id="input-logo" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#003366] file:text-white hover:file:bg-blue-950 cursor-pointer">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="input-title-color" value="#1f2937" class="w-8 h-10 border-0 rounded cursor-pointer bg-transparent flex-shrink-0">
+                            <input type="text" id="input-title" class="flex-1 p-3 border rounded-xl text-sm outline-none focus:border-[#003366]" placeholder="Nombre del negocio">
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <input type="color" id="input-desc-color" value="#6b7280" class="w-8 h-10 border-0 rounded cursor-pointer bg-transparent flex-shrink-0 mt-0.5">
+                            <textarea id="input-desc" class="flex-1 p-3 border rounded-xl text-sm outline-none focus:border-[#003366] text-gray-500 text-xs" rows="2" placeholder="Breve descripción"></textarea>
                         </div>
                     </div>
 
-                    <div id="bg-gradient-section" class="space-y-3 hidden">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                                <label class="text-[11px] font-bold text-gray-500 block mb-2">Color Inicio</label>
-                                <input type="color" id="gradient-start" value="#003366" class="w-full h-10 border-0 rounded-lg cursor-pointer">
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                                <label class="text-[11px] font-bold text-gray-500 block mb-2">Color Final</label>
-                                <input type="color" id="gradient-end" value="#FFB800" class="w-full h-10 border-0 rounded-lg cursor-pointer">
-                            </div>
-                        </div>
+                    <div class="space-y-3 pt-2 border-t border-gray-100">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Fondo</h4>
                         <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                            <label class="text-[11px] font-bold text-gray-500 block mb-2">Dirección del Gradiente</label>
-                            <select id="gradient-direction" class="w-full p-2 bg-white border rounded-lg text-xs outline-none">
-                                <option value="to right">→ Horizontal (Izquierda a Derecha)</option>
-                                <option value="to left">← Horizontal (Derecha a Izquierda)</option>
-                                <option value="to bottom">↓ Vertical (Arriba a Abajo)</option>
-                                <option value="to top">↑ Vertical (Abajo a Arriba)</option>
-                                <option value="to bottom right">↘ Diagonal</option>
-                                <option value="to top right">↗ Diagonal Inversa</option>
+                            <select id="bg-type" class="w-full p-2 bg-white border rounded-lg text-xs outline-none">
+                                <option value="color">Color Sólido</option>
+                                <option value="gradient">Gradiente</option>
+                                <option value="image">Imagen</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div id="bg-image-section" class="hidden">
-                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                            <label class="text-[11px] font-bold text-gray-500 block mb-2">Subir Imagen de Fondo</label>
+                        <div id="bg-color-section" class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                            <label class="text-[11px] font-bold text-gray-500 block mb-2">Color de Fondo</label>
+                            <div class="flex items-center gap-3">
+                                <input type="color" id="input-bg-color" value="#f9fafb" class="w-10 h-10 border-0 rounded-lg cursor-pointer bg-transparent">
+                                <span id="bg-color-hex" class="text-xs font-mono text-gray-500">#F9FAFB</span>
+                            </div>
+                        </div>
+                        <div id="bg-gradient-section" class="space-y-3 hidden">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                    <label class="text-[11px] font-bold text-gray-500 block mb-2">Color Inicio</label>
+                                    <input type="color" id="gradient-start" value="#003366" class="w-full h-10 border-0 rounded-lg cursor-pointer">
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                    <label class="text-[11px] font-bold text-gray-500 block mb-2">Color Final</label>
+                                    <input type="color" id="gradient-end" value="#FFB800" class="w-full h-10 border-0 rounded-lg cursor-pointer">
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                <select id="gradient-direction" class="w-full p-2 bg-white border rounded-lg text-xs outline-none">
+                                    <option value="to right">→ Horizontal</option>
+                                    <option value="to left">← Horizontal</option>
+                                    <option value="to bottom">↓ Vertical</option>
+                                    <option value="to top">↑ Vertical</option>
+                                    <option value="to bottom right">↘ Diagonal</option>
+                                    <option value="to top right">↗ Diagonal Inversa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="bg-image-section" class="bg-gray-50 p-3 rounded-xl border border-gray-200 hidden">
+                            <label class="text-[11px] font-bold text-gray-500 block mb-2">Imagen de Fondo</label>
                             <input type="file" id="input-bg-image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#003366] file:text-white hover:file:bg-blue-950 cursor-pointer">
                         </div>
                     </div>
-                </div>
 
-                <div class="space-y-3 pt-2 border-t border-gray-100">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">3. Botones de Acción</h4>
-
-                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-green-600 font-mono">🟢 WHATSAPP</span>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="show-wa" checked class="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500">
-                                <span class="text-xs text-gray-500">Mostrar</span>
-                            </label>
+                    <div class="space-y-3 pt-2 border-t border-gray-100">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Botones de Acción</h4>
+                        <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-green-600 font-mono">🟢 WHATSAPP</span>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="show-wa" checked class="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500">
+                                    <span class="text-xs text-gray-500">Mostrar</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="btn-wa-text" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="Texto">
+                                <input type="text" id="btn-wa-link" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="URL">
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="btn-wa-text" value="Reserva tu Cita por WhatsApp" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                            <input type="text" id="btn-wa-link" value="https://wa.me/50760000000" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-pink-600 font-mono">📸 INSTAGRAM</span>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="show-ig" checked class="w-4 h-4 rounded border-gray-300 text-pink-500 focus:ring-pink-500">
+                                    <span class="text-xs text-gray-500">Mostrar</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="btn-ig-text" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="Texto">
+                                <input type="text" id="btn-ig-link" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="URL">
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-pink-600 font-mono">📸 INSTAGRAM</span>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="show-ig" checked class="w-4 h-4 rounded border-gray-300 text-pink-500 focus:ring-pink-500">
-                                <span class="text-xs text-gray-500">Mostrar</span>
-                            </label>
+                        <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-blue-600 font-mono">📘 FACEBOOK</span>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="show-fb" class="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500">
+                                    <span class="text-xs text-gray-500">Mostrar</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="btn-fb-text" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="Texto">
+                                <input type="text" id="btn-fb-link" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="URL">
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="btn-ig-text" value="Síguenos en Instagram" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                            <input type="text" id="btn-ig-link" value="https://instagram.com/tallercentralpty" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-red-600 font-mono">🎳 YOUTUBE</span>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="show-yt" class="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500">
+                                    <span class="text-xs text-gray-500">Mostrar</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="btn-yt-text" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="Texto">
+                                <input type="text" id="btn-yt-link" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="URL">
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-blue-600 font-mono">📘 FACEBOOK</span>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="show-fb" class="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500">
-                                <span class="text-xs text-gray-500">Mostrar</span>
-                            </label>
+                        <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-700 font-mono">🌐 SITIO WEB</span>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="show-web" class="w-4 h-4 rounded border-gray-300 text-gray-500 focus:ring-gray-500">
+                                    <span class="text-xs text-gray-500">Mostrar</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="btn-web-text" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="Texto">
+                                <input type="text" id="btn-web-link" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="URL">
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="btn-fb-text" value="Síguenos en Facebook" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                            <input type="text" id="btn-fb-link" value="https://facebook.com/tallercentralpty" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-red-600 font-mono">🎳 YOUTUBE</span>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="show-yt" class="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500">
-                                <span class="text-xs text-gray-500">Mostrar</span>
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="btn-yt-text" value="Ver nuestro Canal" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                            <input type="text" id="btn-yt-link" value="https://youtube.com/@tallercentralpty" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-gray-700 font-mono">🌐 SITIO WEB</span>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="show-web" class="w-4 h-4 rounded border-gray-300 text-gray-500 focus:ring-gray-500">
-                                <span class="text-xs text-gray-500">Mostrar</span>
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="btn-web-text" value="Visitar nuestro Sitio Web" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                            <input type="text" id="btn-web-link" value="https://tallercentralpty.com" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-bold text-purple-600 font-mono">📞 TELÉFONO</span>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="show-phone" class="w-4 h-4 rounded border-gray-300 text-purple-500 focus:ring-purple-500">
-                                <span class="text-xs text-gray-500">Mostrar</span>
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="btn-phone-text" value="Llamar Ahora" class="p-2 border bg-white rounded-lg text-xs outline-none">
-                            <input type="text" id="btn-phone-link" value="tel:+50760000000" class="p-2 border bg-white rounded-lg text-xs outline-none">
+                        <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-purple-600 font-mono">📞 TELÉFONO</span>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="show-phone" class="w-4 h-4 rounded border-gray-300 text-purple-500 focus:ring-purple-500">
+                                    <span class="text-xs text-gray-500">Mostrar</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="btn-phone-text" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="Texto">
+                                <input type="text" id="btn-phone-link" class="p-2 border bg-white rounded-lg text-xs outline-none" placeholder="URL">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <button onclick="saveMinisite()" class="w-full bg-[#FFB800] text-[#003366] py-3 rounded-xl font-bold hover:shadow-lg transition">Publicar Cambios en Vivo</button>
-            </div>
-
-            <div class="flex flex-col items-center justify-center bg-gray-800 p-6 rounded-3xl shadow-inner relative overflow-hidden">
-                <span class="absolute top-3 text-[10px] tracking-widest text-gray-500 font-bold uppercase">Vista Previa del Pasajero</span>
-
-                <div class="w-full max-w-[288px] bg-white rounded-[36px] shadow-2xl border-[8px] border-gray-950 overflow-hidden flex flex-col h-[520px] mt-4">
-
-                    <div id="preview-screen" class="bg-gray-50 flex-grow px-4 pt-8 text-center flex flex-col justify-between pb-6 transition-all duration-200">
-                        <div class="space-y-4 z-10">
-
-                            <div id="preview-logo-container" class="w-16 h-16 bg-[#003366] text-white font-bold rounded-full flex items-center justify-center text-xl mx-auto shadow-md overflow-hidden">
-                                <span id="preview-logo-placeholder">T</span>
-                                <img id="preview-logo-img" class="w-full h-full object-cover hidden" src="" alt="Logo">
+                <!-- Preview -->
+                <div class="flex flex-col items-center justify-center bg-gray-800 p-6 rounded-3xl shadow-inner relative overflow-hidden min-h-[400px]">
+                    <span class="absolute top-3 text-[10px] tracking-widest text-gray-500 font-bold uppercase">Vista Previa</span>
+                    <div class="w-full max-w-[288px] bg-white rounded-[36px] shadow-2xl border-[8px] border-gray-950 overflow-hidden flex flex-col h-[520px] mt-4">
+                        <div id="preview-screen" class="bg-gray-50 flex-grow px-4 pt-8 text-center flex flex-col justify-between pb-6 transition-all duration-200">
+                            <div class="space-y-4 z-10">
+                                <div id="preview-logo-container" class="w-16 h-16 bg-[#003366] text-white font-bold rounded-full flex items-center justify-center text-xl mx-auto shadow-md overflow-hidden">
+                                    <span id="preview-logo-placeholder">T</span>
+                                    <img id="preview-logo-img" class="w-full h-full object-cover hidden" src="" alt="Logo">
+                                </div>
+                                <div>
+                                    <h4 id="preview-title" class="font-bold text-gray-800 text-base leading-tight">Tu Negocio</h4>
+                                    <p id="preview-desc" class="text-[11px] text-gray-500 mt-1 px-2 leading-relaxed"></p>
+                                </div>
+                                <div class="space-y-2.5 pt-4" id="preview-buttons"></div>
                             </div>
-
-                            <div>
-                                <h4 id="preview-title" class="font-bold text-gray-800 text-base leading-tight">Taller Automotriz Central</h4>
-                                <p id="preview-desc" class="text-[11px] text-gray-500 mt-1 px-2 leading-relaxed">Mantenimiento preventivo, frenos, suspensión y diagnóstico por computadora en Ciudad de Panamá.</p>
-                            </div>
-
-                            <div class="space-y-2.5 pt-4">
-                                <a id="preview-wa" href="#" class="block w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);">Reserva tu Cita por WhatsApp</a>
-                                <a id="preview-ig" href="#" class="block w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="background: linear-gradient(115deg, rgb(249, 206, 52), rgb(238, 42, 123), rgb(98, 40, 215)); --contrast-color: #ffdcff;">Síguenos en Instagram</a>
-                                <a id="preview-fb" href="#" class="hidden w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="background: #5890FF;">Síguenos en Facebook</a>
-                                <a id="preview-yt" href="#" class="hidden w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);">Ver nuestro Canal</a>
-                                <a id="preview-web" href="#" class="hidden w-full bg-gray-800 text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm">Visitar nuestro Sitio Web</a>
-                                <a id="preview-phone" href="#" class="hidden w-full bg-purple-600 text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm">Llamar Ahora</a>
-                            </div>
+                            <div class="text-[9px] text-gray-400 z-10">⚡ Potenciado por <span class="font-bold text-[#003366]">pubtaxi.lat</span></div>
                         </div>
-
-                        <div class="text-[9px] text-gray-400 z-10">⚡ Potenciado por <span class="font-bold text-[#003366]">pubtaxi.lat</span></div>
                     </div>
                 </div>
-            </div>
-
             </div>
         </div>
 
+        <div class="border-t border-gray-100 p-4 lg:p-6 flex justify-end gap-3">
+            <button onclick="closeEditModal()" class="px-6 py-3 border border-gray-200 rounded-xl text-sm font-medium hover:bg-gray-50 transition">Cancelar</button>
+            <button onclick="saveMinisite()" class="px-6 py-3 bg-[#FFB800] text-[#003366] rounded-xl text-sm font-bold hover:shadow-lg transition">Publicar Cambios</button>
+        </div>
     </div>
-
-    </main>
-
 </div>
 
 <script src="../js/api.js"></script>
 <script src="../js/ui.js"></script>
 <script src="../js/sidebar.js"></script>
 <script src="js/common.js"></script>
-<script src="js/builder.js"></script>
 <script src="js/mobile.js"></script>
 <script>
-    setActiveNav('builder.html');
+setActiveNav('builder.html');
 
-    let userCampaigns = [];
-    let minisites = [];
+let userCampaigns = [];
+let minisites = [];
+let editingId = null;
 
-    async function loadCampaigns() {
-        try {
-            const data = await api('advertiser.campaigns');
-            userCampaigns = data.campaigns || [];
-            const select = document.getElementById('campaign-select');
-            select.innerHTML = '<option value="">Seleccionar campaña (opcional)</option>' +
-                userCampaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-        } catch (err) { /* ignore */ }
+async function loadCampaigns() {
+    try {
+        const data = await api('advertiser.campaigns');
+        userCampaigns = data.campaigns || [];
+        const select = document.getElementById('campaign-select');
+        select.innerHTML = '<option value="">Sin campaña</option>' +
+            userCampaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    } catch (err) { /* ignore */ }
+}
+
+function renderMinisiteList() {
+    const container = document.getElementById('minisite-list');
+    if (minisites.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-400 col-span-full text-center py-12">No tienes mini-sitios. Crea uno nuevo.</p>';
+        return;
     }
-
-    function renderMinisiteList() {
-        const container = document.getElementById('minisite-list');
-        if (minisites.length === 0) {
-            container.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">No tienes mini-sitios. Crea uno nuevo.</p>';
-            return;
-        }
-        container.innerHTML = minisites.map(m => `
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 flex items-center justify-between cursor-pointer hover:border-[#003366] transition" onclick="selectMinisite(${m.id})">
-                <div>
-                    <p class="text-sm font-medium text-gray-800">${m.title || 'Sin título'}</p>
-                    <p class="text-[10px] text-gray-400">${new Date(m.created_at).toLocaleDateString('es-PA')}</p>
-                </div>
-                <button onclick="event.stopPropagation(); deleteMinisite(${m.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Eliminar</button>
+    container.innerHTML = minisites.map(m => `
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition cursor-pointer" onclick="openEditModal(${m.id})">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-[#003366]/10 rounded-xl flex items-center justify-center text-lg">📱</div>
+                <button onclick="event.stopPropagation(); deleteMinisite(${m.id})" class="text-red-400 hover:text-red-600 text-xs font-medium px-2 py-1 rounded-lg hover:bg-red-50">Eliminar</button>
             </div>
-        `).join('');
-    }
+            <p class="font-semibold text-gray-800 text-sm">${m.title || 'Sin título'}</p>
+            <p class="text-[11px] text-gray-400 mt-1">Creado ${new Date(m.created_at).toLocaleDateString('es-PA')}</p>
+        </div>
+    `).join('');
+}
 
-    async function loadMinisites() {
-        try {
-            const data = await api('advertiser.minisite.list');
-            minisites = data.minisites || [];
-            renderMinisiteList();
-        } catch (err) {
-            toast('Error al cargar mini-sitios: ' + err.message, 'error');
-        }
+async function loadMinisites() {
+    try {
+        const data = await api('advertiser.minisite.list');
+        minisites = data.minisites || [];
+        renderMinisiteList();
+    } catch (err) {
+        toast('Error al cargar mini-sitios: ' + err.message, 'error');
     }
+}
 
-    function resetEditor() {
-        document.getElementById('edit-minisite-id').value = '';
-        document.getElementById('input-title').value = 'Tu Negocio';
-        document.getElementById('input-desc').value = '';
-        document.getElementById('input-bg-color').value = '#f9fafb';
-        document.getElementById('bg-color-hex').textContent = '#F9FAFB';
-        document.getElementById('campaign-select').value = '';
-        document.getElementById('show-wa').checked = false;
-        document.getElementById('show-ig').checked = false;
-        document.getElementById('show-fb').checked = false;
-        document.getElementById('show-yt').checked = false;
-        document.getElementById('show-web').checked = false;
-        document.getElementById('show-phone').checked = false;
-        document.getElementById('editor-header').querySelector('h3').textContent = 'Nuevo Mini-Sitio';
-    }
+function resetEditor() {
+    editingId = null;
+    document.getElementById('edit-minisite-id').value = '';
+    document.getElementById('modal-title').textContent = 'Nuevo Mini-Sitio';
+    document.getElementById('input-title').value = '';
+    document.getElementById('input-desc').value = '';
+    document.getElementById('input-bg-color').value = '#f9fafb';
+    document.getElementById('bg-color-hex').textContent = '#F9FAFB';
+    document.getElementById('campaign-select').value = '';
+    document.getElementById('bg-type').value = 'color';
+    document.getElementById('bg-color-section').classList.remove('hidden');
+    document.getElementById('bg-gradient-section').classList.add('hidden');
+    document.getElementById('bg-image-section').classList.add('hidden');
+    document.getElementById('show-wa').checked = true;
+    document.getElementById('show-ig').checked = true;
+    document.getElementById('show-fb').checked = false;
+    document.getElementById('show-yt').checked = false;
+    document.getElementById('show-web').checked = false;
+    document.getElementById('show-phone').checked = false;
+    document.getElementById('btn-wa-text').value = 'Reserva por WhatsApp';
+    document.getElementById('btn-wa-link').value = 'https://wa.me/50760000000';
+    document.getElementById('btn-ig-text').value = 'Síguenos en Instagram';
+    document.getElementById('btn-ig-link').value = 'https://instagram.com/';
+    document.getElementById('btn-fb-text').value = 'Síguenos en Facebook';
+    document.getElementById('btn-fb-link').value = 'https://facebook.com/';
+    document.getElementById('btn-yt-text').value = 'Ver Canal';
+    document.getElementById('btn-yt-link').value = 'https://youtube.com/';
+    document.getElementById('btn-web-text').value = 'Visitar Sitio Web';
+    document.getElementById('btn-web-link').value = 'https://';
+    document.getElementById('btn-phone-text').value = 'Llamar Ahora';
+    document.getElementById('btn-phone-link').value = 'tel:+507';
+    updatePreview();
+}
 
-    function createMinisite() {
-        resetEditor();
-    }
-
-    async function selectMinisite(id) {
+async function openEditModal(id) {
+    resetEditor();
+    if (id) {
         try {
             const data = await api('advertiser.minisite.get', { id });
-            if (!data.minisite) return;
+            if (!data.minisite) { toast('Mini-sitio no encontrado', 'error'); return; }
             const m = data.minisite;
+            editingId = m.id;
             document.getElementById('edit-minisite-id').value = m.id;
-            const config = m.config || {};
-            document.getElementById('editor-header').querySelector('h3').textContent = 'Editar Mini-Sitio';
-            if (config.description) document.getElementById('input-desc').value = config.description;
-            if (m.title) document.getElementById('input-title').value = m.title;
-            if (config.bgColor) {
-                document.getElementById('input-bg-color').value = config.bgColor;
-                document.getElementById('bg-color-hex').textContent = config.bgColor.toUpperCase();
-            }
-            if (config.buttons) {
-                config.buttons.forEach(b => {
-                    const idx = ['wa','ig','fb','yt','web','phone'].findIndex(k => b.url.includes(k) || b.text.includes(['WhatsApp','Instagram','Facebook','YouTube','Sitio','Llamar'][['wa','ig','fb','yt','web','phone'].indexOf(k)]));
-                });
+            document.getElementById('modal-title').textContent = 'Editar Mini-Sitio';
+            document.getElementById('input-title').value = m.title || '';
+            const cfg = m.config || {};
+            document.getElementById('input-desc').value = cfg.description || '';
+            if (cfg.bgColor) {
+                document.getElementById('input-bg-color').value = cfg.bgColor;
+                document.getElementById('bg-color-hex').textContent = cfg.bgColor.toUpperCase();
             }
             const linked = userCampaigns.find(c => c.minisite_id === m.id);
             document.getElementById('campaign-select').value = linked ? linked.id : '';
-        } catch (err) {
-            toast('Error: ' + err.message, 'error');
-        }
-    }
 
-    async function deleteMinisite(id) {
-        if (!confirm('¿Eliminar este mini-sitio?')) return;
-        try {
-            await api('advertiser.minisite.delete', { id });
-            toast('Mini-sitio eliminado', 'success');
-            await loadMinisites();
-            if (document.getElementById('edit-minisite-id').value == id) resetEditor();
-        } catch (err) {
-            toast(err.message, 'error');
-        }
-    }
-
-    async function saveMinisite() {
-        const buttons = [];
-        const btnConfigs = [
-            { checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link' },
-            { checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link' },
-            { checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link' },
-            { checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link' },
-            { checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link' },
-            { checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link' }
-        ];
-
-        btnConfigs.forEach(c => {
-            if (document.getElementById(c.checkbox).checked) {
-                buttons.push({ text: document.getElementById(c.text).value, url: document.getElementById(c.link).value });
+            if (cfg.buttons) {
+                const btnFields = [
+                    { id: 'wa', checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link' },
+                    { id: 'ig', checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link' },
+                    { id: 'fb', checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link' },
+                    { id: 'yt', checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link' },
+                    { id: 'web', checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link' },
+                    { id: 'phone', checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link' }
+                ];
+                btnFields.forEach((bf, i) => {
+                    const btn = cfg.buttons[i];
+                    if (btn) {
+                        document.getElementById(bf.checkbox).checked = true;
+                        document.getElementById(bf.text).value = btn.text || '';
+                        document.getElementById(bf.link).value = btn.url || '';
+                    } else {
+                        document.getElementById(bf.checkbox).checked = false;
+                    }
+                });
             }
-        });
 
-        const config = {
-            bgColor: document.getElementById('input-bg-color').value,
-            btnColor: '#003366',
-            description: document.getElementById('input-desc').value,
-            logoUrl: '',
-            buttons
-        };
-
-        const title = document.getElementById('input-title').value;
-        const id = document.getElementById('edit-minisite-id').value;
-        const campaignSelect = document.getElementById('campaign-select');
-        const campaignId = campaignSelect.value ? parseInt(campaignSelect.value) : null;
-
-        const params = { title, config, campaign_id: campaignId };
-        if (id) params.id = parseInt(id);
-
-        try {
-            const result = await api('advertiser.minisite.save', params);
-            document.getElementById('edit-minisite-id').value = result.minisite_id;
-            toast('¡Mini-sitio guardado y publicado!', 'success');
-            await loadMinisites();
+            updatePreview();
         } catch (err) {
             toast('Error: ' + err.message, 'error');
+            return;
         }
     }
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
 
-    async function init() {
-        await loadCampaigns();
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+}
+
+async function deleteMinisite(id) {
+    if (!confirm('¿Eliminar este mini-sitio?')) return;
+    try {
+        await api('advertiser.minisite.delete', { id });
+        toast('Mini-sitio eliminado', 'success');
+        if (editingId === id) closeEditModal();
         await loadMinisites();
+    } catch (err) {
+        toast(err.message, 'error');
     }
-    init();
+}
+
+async function saveMinisite() {
+    const buttons = [];
+    const btnConfigs = [
+        { checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link' },
+        { checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link' },
+        { checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link' },
+        { checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link' },
+        { checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link' },
+        { checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link' }
+    ];
+    btnConfigs.forEach(c => {
+        if (document.getElementById(c.checkbox).checked) {
+            buttons.push({ text: document.getElementById(c.text).value, url: document.getElementById(c.link).value });
+        }
+    });
+
+    const config = {
+        bgColor: document.getElementById('input-bg-color').value,
+        description: document.getElementById('input-desc').value,
+        logoUrl: '',
+        buttons
+    };
+
+    const title = document.getElementById('input-title').value;
+    const campaignSelect = document.getElementById('campaign-select');
+    const campaignId = campaignSelect.value ? parseInt(campaignSelect.value) : null;
+
+    const params = { title, config, campaign_id: campaignId };
+    if (editingId) params.id = editingId;
+
+    try {
+        const result = await api('advertiser.minisite.save', params);
+        if (!editingId) editingId = result.minisite_id;
+        document.getElementById('edit-minisite-id').value = result.minisite_id;
+        document.getElementById('modal-title').textContent = 'Editar Mini-Sitio';
+        toast('¡Mini-sitio guardado!', 'success');
+        await loadMinisites();
+    } catch (err) {
+        toast('Error: ' + err.message, 'error');
+    }
+}
+
+function updatePreview() {
+    const title = document.getElementById('input-title').value || 'Tu Negocio';
+    const desc = document.getElementById('input-desc').value;
+    const bgColor = document.getElementById('input-bg-color').value;
+    const titleColor = document.getElementById('input-title-color').value;
+    const descColor = document.getElementById('input-desc-color').value;
+
+    document.getElementById('preview-title').textContent = title;
+    document.getElementById('preview-title').style.color = titleColor;
+    document.getElementById('preview-desc').textContent = desc;
+    document.getElementById('preview-desc').style.color = descColor;
+    document.getElementById('preview-screen').style.backgroundColor = bgColor;
+
+    const btnConfigs = [
+        { checkbox: 'show-wa', text: 'btn-wa-text', link: 'btn-wa-link', style: 'background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);' },
+        { checkbox: 'show-ig', text: 'btn-ig-text', link: 'btn-ig-link', style: 'background: linear-gradient(115deg, rgb(249, 206, 52), rgb(238, 42, 123), rgb(98, 40, 215));' },
+        { checkbox: 'show-fb', text: 'btn-fb-text', link: 'btn-fb-link', style: 'background: #5890FF;' },
+        { checkbox: 'show-yt', text: 'btn-yt-text', link: 'btn-yt-link', style: 'background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);' },
+        { checkbox: 'show-web', text: 'btn-web-text', link: 'btn-web-link', style: 'background: #1f2937;' },
+        { checkbox: 'show-phone', text: 'btn-phone-text', link: 'btn-phone-link', style: 'background: #9333ea;' }
+    ];
+
+    const container = document.getElementById('preview-buttons');
+    container.innerHTML = btnConfigs.map(c => {
+        if (!document.getElementById(c.checkbox).checked) return '';
+        const text = document.getElementById(c.text).value || 'Botón';
+        const link = document.getElementById(c.link).value || '#';
+        return `<a href="${link}" class="block w-full text-white py-2.5 rounded-xl font-semibold text-xs shadow-sm" style="${c.style}" target="_blank">${text}</a>`;
+    }).join('');
+}
+
+['input-title', 'input-desc', 'input-title-color', 'input-desc-color', 'input-bg-color',
+ 'show-wa', 'show-ig', 'show-fb', 'show-yt', 'show-web', 'show-phone',
+ 'btn-wa-text', 'btn-wa-link', 'btn-ig-text', 'btn-ig-link',
+ 'btn-fb-text', 'btn-fb-link', 'btn-yt-text', 'btn-yt-link',
+ 'btn-web-text', 'btn-web-link', 'btn-phone-text', 'btn-phone-link'
+].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updatePreview);
+    if (el && el.type === 'checkbox') el.addEventListener('change', updatePreview);
+});
+
+document.getElementById('bg-type').addEventListener('change', function() {
+    document.getElementById('bg-color-section').classList.toggle('hidden', this.value !== 'color');
+    document.getElementById('bg-gradient-section').classList.toggle('hidden', this.value !== 'gradient');
+    document.getElementById('bg-image-section').classList.toggle('hidden', this.value !== 'image');
+});
+
+async function init() {
+    await loadCampaigns();
+    await loadMinisites();
+}
+init();
 </script>
 </body>
 </html>
