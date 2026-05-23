@@ -15,6 +15,7 @@ function stubPage(campaignName) {
   <p class="text-xs text-gray-400">Escanea otro código QR en tu taxi.</p>
   <div class="mt-8 text-[10px] text-gray-300">⚡ pubtaxi.lat</div>
 </div></body></html>`;
+}
 
 export default {
   fetch: async (request, env, ctx) => {
@@ -132,12 +133,10 @@ export default {
     // 4. Everything else - serve from Pages Assets (auto-provided by Cloudflare Pages)
     console.log(JSON.stringify({ event: "fetch_asset", url: url.pathname }));
 
-    // Cloudflare Pages provides env.ASSETS automatically
     if (env.ASSETS) {
       return env.ASSETS.fetch(request);
     }
 
-    // Fallback: try fetch (for local development)
     return fetch(request);
   }
 };
