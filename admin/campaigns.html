@@ -153,16 +153,37 @@
                     </select>
                     <select id="qr-position" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]">
                         <option value="">Posición</option>
-                        <option value="Apoyacabezas Izquierdo">Apoyacabezas Izquierdo</option>
-                        <option value="Apoyacabezas Derecho">Apoyacabezas Derecho</option>
-                        <option value="Salpicadero">Salpicadero</option>
-                        <option value="Asiento Trasero">Asiento Trasero</option>
+                        <option value="Conductor">Conductor (apoyacabezas)</option>
+                        <option value="Pasajero trasero">Pasajero trasero (apoyacabezas)</option>
+                        <option value="Salpicadero">Salpicadero (torpedo)</option>
                     </select>
                     <button onclick="assignQr()" class="bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950 transition">Generar QR</button>
                 </div>
                 <p id="qr-result" class="text-xs text-gray-500 hidden"></p>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Move QR Modal -->
+<div id="move-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+        <h3 class="font-bold text-lg mb-4">Mover QR</h3>
+        <form id="move-form" class="space-y-4">
+            <input type="hidden" id="move-qr-id">
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Vehículo</label>
+                <select id="move-vehicle" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]"></select>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Posición</label>
+                <select id="move-position" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-[#003366]"></select>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeMoveModal()" class="flex-1 py-3 border rounded-xl text-sm font-medium">Cancelar</button>
+                <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950">Mover</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -317,6 +338,7 @@ async function loadQrCodes(campaignId) {
                 </div>
                 <div class="flex items-center gap-3">
                     <button onclick="downloadSticker(this)" data-sid="${sid}" data-plate="${plate.replace(/"/g, '&quot;')}" data-pos="${pos.replace(/"/g, '&quot;')}" class="text-[#003366] hover:underline text-xs font-medium">Descargar</button>
+                    <button onclick="openMoveModal(${q.id})" class="text-gray-500 hover:text-[#003366] text-xs font-medium">Mover</button>
                     <button onclick="deleteQr(${q.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Eliminar</button>
                     <span class="text-xs text-gray-400">${new Date(q.created_at).toLocaleDateString('es-PA')}</span>
                 </div>
@@ -391,10 +413,21 @@ async function loadQrVehicles() {
         const select = document.getElementById('qr-vehicle');
         select.innerHTML = '<option value="">Seleccionar vehículo</option>' +
             (data.vehicles || []).map(v =>
-                `<option value="${v.id}">${v.plate_number || '#' + v.id} — ${v.model || ''} (${v.publisher_name || ''})</option>`
+                `<option value="${v.id}" data-positions='${v.positions || '["Conductor","Pasajero trasero"]'}">${v.plate_number || '#' + v.id} — ${v.model || ''} (${v.publisher_name || ''})</option>`
             ).join('');
     } catch (err) { /* ignore */ }
 }
+
+document.getElementById('qr-vehicle').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    const posSelect = document.getElementById('qr-position');
+    let positions = ['Conductor', 'Pasajero trasero', 'Salpicadero'];
+    if (opt && opt.dataset.positions) {
+        try { positions = JSON.parse(opt.dataset.positions); } catch(e) {}
+    }
+    posSelect.innerHTML = '<option value="">Posición</option>' +
+        positions.map(p => `<option value="${p}">${p}</option>`).join('');
+});
 
 async function deleteQr(id) {
     if (!confirm('¿Eliminar este código QR? Los eventos asociados también se eliminarán.')) return;
@@ -405,6 +438,56 @@ async function deleteQr(id) {
         loadCampaigns();
     } catch (err) { toast(err.message, 'error'); }
 }
+
+let moveAllVehicles = [];
+
+async function openMoveModal(qrId) {
+    document.getElementById('move-qr-id').value = qrId;
+    try {
+        const data = await api('vehicle.list');
+        moveAllVehicles = data.vehicles || [];
+        const vSelect = document.getElementById('move-vehicle');
+        vSelect.innerHTML = '<option value="">Seleccionar vehículo</option>' +
+            moveAllVehicles.map(v =>
+                `<option value="${v.id}" data-positions='${v.positions || '["Conductor","Pasajero trasero","Salpicadero"]'}'>${v.plate_number || '#' + v.id} — ${v.model || ''}</option>`
+            ).join('');
+        document.getElementById('move-position').innerHTML = '<option value="">Primero selecciona vehículo</option>';
+    } catch (err) { toast(err.message, 'error'); }
+    document.getElementById('move-modal').classList.remove('hidden');
+}
+
+function closeMoveModal() {
+    document.getElementById('move-modal').classList.add('hidden');
+}
+
+document.getElementById('move-vehicle').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    const posSelect = document.getElementById('move-position');
+    let positions = ['Conductor', 'Pasajero trasero', 'Salpicadero'];
+    if (opt && opt.dataset.positions) {
+        try { positions = JSON.parse(opt.dataset.positions); } catch(e) {}
+    }
+    posSelect.innerHTML = '<option value="">Seleccionar posición</option>' +
+        positions.map(p => `<option value="${p}">${p}</option>`).join('');
+});
+
+document.getElementById('move-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true; btn.textContent = 'Moviendo...';
+    try {
+        await api('qr.update', {
+            id: parseInt(document.getElementById('move-qr-id').value),
+            vehicle_id: parseInt(document.getElementById('move-vehicle').value),
+            position: document.getElementById('move-position').value
+        });
+        closeMoveModal();
+        await loadQrCodes(qrCampaignId);
+        loadCampaigns();
+        toast('QR movido', 'success');
+    } catch (err) { toast(err.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Mover'; }
+});
 
 async function assignQr() {
     const vehicleId = parseInt(document.getElementById('qr-vehicle').value);

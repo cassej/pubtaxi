@@ -218,7 +218,7 @@ const METHODS = {
   'admin.vehicles.list': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
     const vehicles = await env.DB.prepare(`
-      SELECT v.id, v.plate_number, v.model, v.status, v.created_at,
+      SELECT v.id, v.plate_number, v.model, v.status, v.created_at, v.positions,
              u.id as publisher_id, u.name as publisher_name, u.email as publisher_email,
              (SELECT COUNT(*) FROM qr_codes qc WHERE qc.vehicle_id = v.id) as qr_count,
              (SELECT COUNT(*) FROM events e JOIN qr_codes qc ON e.qr_id = qc.id WHERE qc.vehicle_id = v.id AND e.event_type = 'scan' AND e.created_at > date('now', '-30 days')) as scans_month
@@ -247,23 +247,29 @@ const METHODS = {
 
   'admin.vehicles.create': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
-    const { publisher_id, plate_number, model } = params;
+    const { publisher_id, plate_number, model, positions } = params;
     if (!publisher_id) throw new Error("Missing required params: publisher_id");
 
     const result = await env.DB.prepare(
-      "INSERT INTO vehicles (publisher_id, plate_number, model) VALUES (?, ?, ?)"
-    ).bind(publisher_id, plate_number || '', model || '').run();
+      "INSERT INTO vehicles (publisher_id, plate_number, model, positions) VALUES (?, ?, ?, ?)"
+    ).bind(publisher_id, plate_number || '', model || '', positions || null).run();
     return { success: true, id: result.meta.last_row_id };
   },
 
   'admin.vehicles.update': async (params, env, context) => {
     await authenticate(context.request, env, ['admin']);
-    const { id, publisher_id, plate_number, model, status } = params;
+    const { id, publisher_id, plate_number, model, status, positions } = params;
     if (!id) throw new Error("Missing required params: id");
 
-    await env.DB.prepare(
-      "UPDATE vehicles SET publisher_id = ?, plate_number = ?, model = ?, status = ? WHERE id = ?"
-    ).bind(publisher_id, plate_number || '', model || '', status || 'active', id).run();
+    if (positions !== undefined) {
+      await env.DB.prepare(
+        "UPDATE vehicles SET publisher_id = ?, plate_number = ?, model = ?, status = ?, positions = ? WHERE id = ?"
+      ).bind(publisher_id, plate_number || '', model || '', status || 'active', positions, id).run();
+    } else {
+      await env.DB.prepare(
+        "UPDATE vehicles SET publisher_id = ?, plate_number = ?, model = ?, status = ? WHERE id = ?"
+      ).bind(publisher_id, plate_number || '', model || '', status || 'active', id).run();
+    }
     return { success: true };
   },
 
@@ -671,11 +677,41 @@ const METHODS = {
     const { vehicle_id, campaign_id, position } = params;
     if (!vehicle_id || !campaign_id) throw new Error("Missing required params: vehicle_id, campaign_id");
 
+    const existing = await env.DB.prepare(
+      "SELECT id FROM qr_codes WHERE vehicle_id = ? AND position = ?"
+    ).bind(vehicle_id, position || null).first();
+    if (existing) throw new Error("Ya existe un QR en esta posición para este vehículo. Muévelo o elimínalo primero.");
+
     const result = await env.DB.prepare("INSERT INTO qr_codes (vehicle_id, campaign_id, position) VALUES (?, ?, ?)")
         .bind(vehicle_id, campaign_id, position).run();
     const lastId = result.meta.last_row_id;
 
     return { shortId: toBase62(lastId), id: lastId };
+  },
+
+  'qr.update': async (params, env, context) => {
+    await authenticate(context.request, env, ['admin']);
+    const { id, vehicle_id, position } = params;
+    if (!id) throw new Error("Missing required params: id");
+    if (!vehicle_id && !position) throw new Error("Provide vehicle_id or position to update");
+
+    const qr = await env.DB.prepare("SELECT * FROM qr_codes WHERE id = ?").bind(id).first();
+    if (!qr) throw new Error("QR not found");
+
+    const newVehicleId = vehicle_id || qr.vehicle_id;
+    const newPosition = position !== undefined ? position : qr.position;
+
+    if (newVehicleId !== qr.vehicle_id || newPosition !== qr.position) {
+      const existing = await env.DB.prepare(
+        "SELECT id FROM qr_codes WHERE id != ? AND vehicle_id = ? AND position = ?"
+      ).bind(id, newVehicleId, newPosition).first();
+      if (existing) throw new Error("Ya existe un QR en esa posición para ese vehículo");
+    }
+
+    await env.DB.prepare("UPDATE qr_codes SET vehicle_id = ?, position = ? WHERE id = ?")
+      .bind(newVehicleId, newPosition, id).run();
+
+    return { success: true };
   },
 
   'qr.delete': async (params, env, context) => {
@@ -777,12 +813,12 @@ const METHODS = {
     let vehicles;
     if (auth.user.role === 'admin') {
       vehicles = await env.DB.prepare(`
-        SELECT v.id, v.plate_number, v.model, v.status, u.name as publisher_name
+        SELECT v.id, v.plate_number, v.model, v.status, v.positions, u.name as publisher_name
         FROM vehicles v LEFT JOIN users u ON v.publisher_id = u.id ORDER BY v.id DESC
       `).all();
     } else {
       vehicles = await env.DB.prepare(`
-        SELECT v.id, v.plate_number, v.model, v.status,
+        SELECT v.id, v.plate_number, v.model, v.status, v.positions,
                (SELECT COUNT(*) FROM qr_codes qc WHERE qc.vehicle_id = v.id AND qc.campaign_id IN (SELECT id FROM campaigns WHERE advertiser_id = ?)) as has_ads
         FROM vehicles v WHERE v.status = 'active' ORDER BY v.id DESC
       `).bind(auth.user.id).all();

@@ -71,6 +71,7 @@
                         <th class="p-4">Taxista</th>
                         <th class="p-4">Email</th>
                         <th class="p-4">Estado</th>
+                        <th class="p-4">Posiciones</th>
                         <th class="p-4 text-center">QR</th>
                         <th class="p-4 text-center">Escaneos (30d)</th>
                         <th class="p-4 text-right">Acciones</th>
@@ -114,6 +115,23 @@
                 <option value="active">Activo</option>
                 <option value="inactive">Inactivo</option>
             </select>
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Posiciones disponibles</p>
+                <div class="space-y-2" id="edit-positions">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" value="Conductor" class="pos-check w-4 h-4 rounded border-gray-300 text-[#003366] focus:ring-[#003366]">
+                        <span class="text-sm text-gray-700">Conductor (apoyacabezas)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" value="Pasajero trasero" class="pos-check w-4 h-4 rounded border-gray-300 text-[#003366] focus:ring-[#003366]">
+                        <span class="text-sm text-gray-700">Pasajero trasero (apoyacabezas)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" value="Salpicadero" class="pos-check w-4 h-4 rounded border-gray-300 text-[#003366] focus:ring-[#003366]">
+                        <span class="text-sm text-gray-700">Salpicadero (torpedo)</span>
+                    </label>
+                </div>
+            </div>
             <div class="flex gap-3">
                 <button type="button" onclick="closeEditModal()" class="flex-1 py-3 border rounded-xl text-sm font-medium">Cancelar</button>
                 <button type="submit" class="flex-1 bg-[#003366] text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-950">Guardar</button>
@@ -159,7 +177,7 @@ function populateSelects() {
 function renderVehicles() {
     const tbody = document.getElementById('vehicles-tbody');
     if (allVehicles.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-gray-400">No hay vehículos</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-gray-400">No hay vehículos</td></tr>';
         return;
     }
     tbody.innerHTML = allVehicles.map(v => `
@@ -169,6 +187,7 @@ function renderVehicles() {
             <td class="p-4">${v.publisher_name || '-'}</td>
             <td class="p-4 text-gray-500 break-all">${v.publisher_email || '-'}</td>
             <td class="p-4"><span class="${v.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-2 py-1 rounded-full text-xs font-bold">${(v.status || 'active').toUpperCase()}</span></td>
+            <td class="p-4 text-gray-500 text-xs">${(function(){ try { return JSON.parse(v.positions||'[]').join(', '); } catch(e) { return v.positions||'—'; } })()}</td>
             <td class="p-4 text-center">${v.qr_count || 0}</td>
             <td class="p-4 text-center">${v.scans_month || 0}</td>
             <td class="p-4 text-right">
@@ -212,6 +231,8 @@ async function editVehicle(id) {
     document.getElementById('edit-model').value = v.model || '';
     document.getElementById('edit-status').value = v.status || 'active';
     document.getElementById('edit-publisher').value = v.publisher_id || '';
+    const pos = v.positions ? JSON.parse(v.positions) : ['Conductor', 'Pasajero trasero'];
+    document.querySelectorAll('#edit-positions .pos-check').forEach(cb => cb.checked = pos.includes(cb.value));
     document.getElementById('edit-modal').classList.remove('hidden');
 }
 
@@ -219,13 +240,17 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
     e.preventDefault();
     const btn = this.querySelector('button[type="submit"]');
     btn.disabled = true; btn.textContent = 'Guardando...';
+    const positions = JSON.stringify(
+        Array.from(document.querySelectorAll('#edit-positions .pos-check:checked')).map(cb => cb.value)
+    );
     try {
         await api('admin.vehicles.update', {
             id: parseInt(document.getElementById('edit-id').value),
             publisher_id: parseInt(document.getElementById('edit-publisher').value) || null,
             plate_number: document.getElementById('edit-plate').value,
             model: document.getElementById('edit-model').value,
-            status: document.getElementById('edit-status').value
+            status: document.getElementById('edit-status').value,
+            positions
         });
         closeEditModal(); loadVehicles();
         toast('Vehículo actualizado', 'success');

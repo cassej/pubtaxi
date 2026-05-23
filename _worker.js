@@ -128,6 +128,9 @@ export default {
       if (path[0] === 'advertiser' && !path[1]) {
         return new Response(null, { status: 302, headers: { "Location": "/advertiser/index.html" } });
       }
+      if (path[0] === 'advertiser' && path[1] === 'minisite') {
+        return new Response(null, { status: 302, headers: { "Location": "/advertiser/builder-edit.html" + (url.search || '') } });
+      }
       if (path[0] === 'driver' && !path[1]) {
         return new Response(null, { status: 302, headers: { "Location": "/driver/index.html" } });
       }
